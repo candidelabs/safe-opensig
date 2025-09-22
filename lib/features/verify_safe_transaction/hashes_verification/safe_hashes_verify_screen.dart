@@ -6,12 +6,12 @@ import 'package:flutter/services.dart';
 import 'package:safe_verify/shared/models/safe_account_model.dart';
 import 'package:safe_verify/shared/models/safe_transaction_model.dart';
 
-class SafeTransactionVerifyScreen extends StatefulWidget {
+class SafeHashesVerifyScreen extends StatefulWidget {
   final BigInt? latestNonce;
   final SafeAccount safeAccount;
   final SafeTransaction safeTransaction;
 
-  const SafeTransactionVerifyScreen({
+  const SafeHashesVerifyScreen({
     super.key,
     this.latestNonce,
     required this.safeAccount,
@@ -19,10 +19,10 @@ class SafeTransactionVerifyScreen extends StatefulWidget {
   });
 
   @override
-  State<SafeTransactionVerifyScreen> createState() => _SafeTransactionVerifyScreenState();
+  State<SafeHashesVerifyScreen> createState() => _SafeHashesVerifyScreenState();
 }
 
-class _SafeTransactionVerifyScreenState extends State<SafeTransactionVerifyScreen> {
+class _SafeHashesVerifyScreenState extends State<SafeHashesVerifyScreen> {
   BigInt? nonce;
 
   @override
@@ -35,27 +35,43 @@ class _SafeTransactionVerifyScreenState extends State<SafeTransactionVerifyScree
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Verify Transaction')),
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _NonceControl(
-              latestNonce: widget.latestNonce,
-              onChange: (_nonce) => setState(() => nonce = _nonce),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          return SingleChildScrollView(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minWidth: constraints.maxWidth, minHeight: constraints.maxHeight),
+              child: IntrinsicHeight(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    _NonceControl(
+                      latestNonce: widget.latestNonce,
+                      onChange: (_nonce) => setState(() => nonce = _nonce),
+                    ),
+                    const SizedBox(height: 16),
+                    _AccountDetailsCard(safeAccount: widget.safeAccount),
+                    const SizedBox(height: 16),
+                    _TransactionHashesCard(
+                      nonce: nonce,
+                      safeAccount: widget.safeAccount,
+                      safeTransaction: widget.safeTransaction,
+                    ),
+                    const SizedBox(height: 16),
+                    _TransactionJsonCard(safeTransaction: widget.safeTransaction),
+                    const SizedBox(height: 16),
+                    const Spacer(),
+                    ElevatedButton(
+                      onPressed: () async {
+                      },
+                      child: const Text('Start ledger verification'),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+                ),
+              ),
             ),
-            const SizedBox(height: 16),
-            _AccountDetailsCard(safeAccount: widget.safeAccount),
-            const SizedBox(height: 16),
-            _TransactionHashesCard(
-              nonce: nonce,
-              safeAccount: widget.safeAccount,
-              safeTransaction: widget.safeTransaction,
-            ),
-            const SizedBox(height: 16),
-            _TransactionJsonCard(safeTransaction: widget.safeTransaction),
-            const SizedBox(height: 16),
-          ],
-        ),
+          );
+        }
       ),
     );
   }

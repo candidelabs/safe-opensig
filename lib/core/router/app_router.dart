@@ -4,8 +4,9 @@ import 'package:safe_verify/core/storage/misc_box.dart';
 import 'package:safe_verify/features/account_management/account_addition_form_screen.dart';
 import 'package:safe_verify/features/account_management/account_listing_screen.dart';
 import 'package:safe_verify/features/onboarding/onboarding_screen.dart';
-import 'package:safe_verify/features/verify_safe_transaction/presentation/screens/safe_transaction_form_screen.dart';
-import 'package:safe_verify/features/verify_safe_transaction/presentation/screens/safe_transaction_verify_screen.dart';
+import 'package:safe_verify/features/verify_safe_transaction/hashes_verification/safe_hashes_verify_screen.dart';
+import 'package:safe_verify/features/verify_safe_transaction/ledger_verification/safe_ledger_verify_screen.dart';
+import 'package:safe_verify/features/verify_safe_transaction/safe_transaction_form_screen.dart';
 import 'package:safe_verify/shared/models/safe_account_model.dart';
 import 'package:safe_verify/shared/models/safe_transaction_model.dart';
 
@@ -42,16 +43,30 @@ final GoRouter router = GoRouter(
       },
       routes: [
         GoRoute(
-          path: 'verify',
+          path: 'hashes',
           builder: (context, state) {
             final extra = state.extra as (SafeAccount, SafeTransaction, BigInt?);
             final SafeAccount safeAccount = extra.$1;
             final SafeTransaction safeTx = extra.$2;
             final BigInt? latestNonce = extra.$3;
-            return SafeTransactionVerifyScreen(
+            return SafeHashesVerifyScreen(
               safeAccount: safeAccount,
               safeTransaction: safeTx,
               latestNonce: latestNonce,
+            );
+          },
+        ),
+        GoRoute(
+          path: 'ledger',
+          builder: (context, state) {
+            final extra = state.extra as (SafeAccount, SafeTransaction, BigInt);
+            final SafeAccount safeAccount = extra.$1;
+            final SafeTransaction safeTx = extra.$2;
+            final BigInt nonce = extra.$3;
+            return SafeLedgerVerifyScreen(
+              safeAccount: safeAccount,
+              safeTransaction: safeTx,
+              nonce: nonce,
             );
           },
         ),
