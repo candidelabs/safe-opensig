@@ -167,6 +167,42 @@ class LedgerNanoSPlusContentGenerator extends HWContentGenerator {
       trail: "icon:chevron-right"
     ));
     //
+    var domainHash = account.getDomainHash();
+    var domainHashLines = _getLinesForString(domainHash);
+    domainHashLines = domainHashLines.map((e) => "text:normal:$e").toList();
+    result.add(HWPageContent(
+        lead: "icon:chevron-left",
+        lines: [
+          "text:bold:Domain hash(1/2)",
+          ...(domainHashLines.sublist(0, 3)),
+        ],
+        trail: "icon:chevron-right"
+    ));
+    result.add(HWPageContent(
+        lead: "icon:chevron-left",
+        lines: [
+          "text:bold:Domain hash(2/2)",
+          ...(domainHashLines.sublist(3)),
+        ],
+        trail: "icon:chevron-right"
+    ));
+    //
+    result.add(HWPageContent(
+        lead: "icon:chevron-left",
+        lines: [
+          "text:bold:Message hash(1/2)",
+          ...(messageHashLines.sublist(0, 3)),
+        ],
+        trail: "icon:chevron-right"
+    ));
+    result.add(HWPageContent(
+        lead: "icon:chevron-left",
+        lines: [
+          "text:bold:Message hash(2/2)",
+          ...(messageHashLines.sublist(3)),
+        ],
+        trail: "icon:chevron-right"
+    ));
     return result;
   }
 

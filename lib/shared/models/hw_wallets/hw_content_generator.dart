@@ -2,6 +2,13 @@ import 'package:safe_verify/shared/models/safe_account_model.dart';
 import 'package:safe_verify/shared/models/safe_transaction_model.dart';
 import 'package:version/version.dart';
 
+enum HardwareWallet {
+  ledger_nano("Ledger Nano");
+
+  const HardwareWallet(this.name);
+  final String name;
+}
+
 class HWScreenConfiguration {
   int screenLines;
   int lineWidth;

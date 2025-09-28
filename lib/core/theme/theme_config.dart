@@ -177,12 +177,8 @@ class ThemeConfig {
   );
 
   static final ButtonStyle secondaryButtonStyle = OutlinedButton.styleFrom(
-    padding: const EdgeInsets.symmetric(
-      horizontal: spacingLarge,
-      vertical: spacingMedium,
-    ),
     shape: RoundedRectangleBorder(
-      borderRadius: borderRadiusLarge,
+      borderRadius: BorderRadius.circular(16),
     ),
   );
 

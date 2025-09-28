@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
 import 'package:safe_verify/shared/models/safe_account_model.dart';
 import 'package:safe_verify/shared/models/safe_transaction_model.dart';
 
@@ -60,10 +61,26 @@ class _SafeHashesVerifyScreenState extends State<SafeHashesVerifyScreen> {
                     _TransactionJsonCard(safeTransaction: widget.safeTransaction),
                     const SizedBox(height: 16),
                     const Spacer(),
-                    ElevatedButton(
-                      onPressed: () async {
-                      },
-                      child: const Text('Start ledger verification'),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        OutlinedButton(
+                          onPressed: () {
+                            GoRouter.of(context).push(
+                              "/verify-transaction/ledger",
+                              extra: (widget.safeAccount, widget.safeTransaction, nonce!)
+                            );
+                          },
+                          child: const Text('Verify Ledger Screens'),
+                        ),
+                        SizedBox(width: 4),
+                        ElevatedButton(
+                          onPressed: () {
+                            GoRouter.of(context).go("/accounts",);
+                          },
+                          child: const Text('Finish'),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 16),
                   ],
