@@ -2,10 +2,13 @@ import 'package:blockies/blockies.dart';
 import 'package:dotted_line/dotted_line.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:safe_verify/core/theme/theme_config.dart';
+import 'package:safe_verify/features/verify_safe_transaction/simulation/warning_sheets/allowance_warning_sheet.dart';
 import 'package:safe_verify/shared/models/safe_account_model.dart';
 import 'package:safe_verify/shared/models/safe_transaction_model.dart';
 import 'package:safe_verify/shared/models/simulation/safe_setting_change.dart';
 import 'package:safe_verify/shared/models/simulation/simulation_result.dart';
+import 'package:safe_verify/shared/models/simulation/token_allowance.dart';
 import 'package:safe_verify/shared/models/simulation/token_transfer.dart';
 import 'package:safe_verify/shared/models/simulation/warning_transaction.dart';
 import 'package:safe_verify/shared/utils/utilities.dart';
@@ -118,7 +121,7 @@ class _SafeTxSimulationScreenState extends State<SafeTxSimulationScreen> {
         ),
       );
     }
-
+    final isDangerous = widget.simulationResult.dangerous.$1;
     return Scaffold(
       appBar: AppBar(
         title: const Text('Transaction Simulation'),
@@ -130,7 +133,11 @@ class _SafeTxSimulationScreenState extends State<SafeTxSimulationScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            isDangerous ? _buildDangerousTransactionCard(context) : SizedBox.shrink(),
+            SizedBox(height: isDangerous ? 16 : 0),
             _buildBalanceChangesCard(context),
+            const SizedBox(height: 16),
+            _buildAllowancesCard(context),
             const SizedBox(height: 16),
             _buildSafeSettingsChangesCard(context),
             const SizedBox(height: 16),
@@ -259,6 +266,206 @@ class _SafeTxSimulationScreenState extends State<SafeTxSimulationScreen> {
                 ),
               ),
             ],
+          ),
+          drawSeparatorLine ? Container(
+            margin: EdgeInsets.only(top: 8),
+            child: DottedLine(
+              direction: Axis.horizontal,
+              dashColor: Colors.white54,
+              dashGapLength: 2.5,
+            ),
+          ) : SizedBox.shrink()
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAllowancesCard(BuildContext context) {
+    final allowances = widget.simulationResult.allowances;
+    if (allowances.isEmpty) {
+      return _buildCard(
+        context,
+        title: 'Allowances',
+        icon: Icons.shopping_bag,
+        child: const Padding(
+          padding: EdgeInsets.symmetric(vertical: 16.0),
+          child: Text(
+            'No allowances detected',
+            style: TextStyle(color: Colors.grey),
+          ),
+        ),
+      );
+    }
+
+    return _buildCard(
+      context,
+      title: 'Allowances',
+      icon: Icons.shopping_bag,
+      infoIcon: IconButton(
+        icon: const Icon(Icons.info_outline_rounded, size: 16, color: Colors.amber,),
+        onPressed: () {
+          showModalBottomSheet(
+            context: context,
+            builder: (context) => const AllowanceWarningSheet(),
+            isScrollControlled: true,
+            showDragHandle: true,
+            useSafeArea: true,
+            shape: RoundedRectangleBorder(
+              borderRadius: ThemeConfig.borderRadiusLarge,
+            )
+          );
+        },
+      ),
+      child: ListView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        itemCount: allowances.length,
+        itemBuilder: (context, index) {
+          final allowance = allowances[index];
+          return _buildAllowanceItem(allowance, index == allowances.length-1 ? false : true);
+        },
+      ),
+    );
+  }
+
+  Widget _buildAllowanceItem(TokenAllowance allowance, bool drawSeparatorLine) {
+    if (allowance.amount == BigInt.zero) return _buildRevokedAllowanceItem(allowance, drawSeparatorLine);
+    final metadata = allowance.metadata!;
+    var readableAmount = "";
+    if (allowance.amount == BigInt.parse("ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", radix: 16)){
+      readableAmount = "∞";
+    }else{
+      readableAmount = Utilities.formatCryptoAmount(allowance.amount, metadata.decimals);
+    }
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      child: Column(
+        children: [
+          RichText(
+            text: TextSpan(
+              style: TextStyle(fontSize: 12, color: Colors.grey[600], fontWeight: FontWeight.bold),
+              children: [
+                WidgetSpan(
+                  child: Icon(Icons.warning_amber, size: 13, color: Colors.orange,)
+                ),
+                TextSpan(
+                  text: "  You are giving ",
+                ),
+                TextSpan(
+                  text: Utilities.truncateIfAddress(allowance.spender.with0x, leadingDigits: 8, trailingDigits: 8),
+                  style: TextStyle(color: Colors.grey[400], fontWeight: FontWeight.w800),
+                ),
+                TextSpan(
+                  text: " permission to spend ",
+                ),
+                WidgetSpan(
+                  child: SizedBox(
+                    width: 14,
+                    height: 14,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(70),
+                      child: metadata.logoUri == "unknown" ? Container(
+                        alignment: Alignment.center,
+                        color: Colors.grey,
+                        child: Text("?", style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),),
+                      ) : Image.network(metadata.logoUri),
+                    ),
+                  ),
+                ),
+                TextSpan(
+                  text: " $readableAmount",
+                  style: TextStyle(color: Colors.grey[400], fontWeight: FontWeight.w800, fontSize: 14),
+                ),
+                TextSpan(
+                  text: " ${metadata.symbol}",
+                  style: TextStyle(color: Colors.grey[400], fontWeight: FontWeight.w800),
+                ),
+                TextSpan(
+                  text: " from your account's ",
+                ),
+                WidgetSpan(
+                  child: SizedBox(
+                    width: 14,
+                    height: 14,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(70),
+                      child: metadata.logoUri == "unknown" ? Container(
+                        alignment: Alignment.center,
+                        color: Colors.grey,
+                        child: Text("?", style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),),
+                      ) : Image.network(metadata.logoUri),
+                    ),
+                  ),
+                ),
+                TextSpan(
+                  text: " ${metadata.name}",
+                  style: TextStyle(color: Colors.grey[400], fontWeight: FontWeight.w800),
+                ),
+                TextSpan(
+                  text: " balance",
+                ),
+              ]
+            ),
+          ),
+          drawSeparatorLine ? Container(
+            margin: EdgeInsets.only(top: 8),
+            child: DottedLine(
+              direction: Axis.horizontal,
+              dashColor: Colors.white54,
+              dashGapLength: 2.5,
+            ),
+          ) : SizedBox.shrink()
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRevokedAllowanceItem(TokenAllowance allowance, bool drawSeparatorLine) {
+    final metadata = allowance.metadata!;
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      child: Column(
+        children: [
+          RichText(
+            text: TextSpan(
+              style: TextStyle(fontSize: 12, color: Colors.grey[600], fontWeight: FontWeight.bold),
+              children: [
+                WidgetSpan(
+                  child: Icon(Icons.check_circle_rounded, size: 13, color: Colors.green,)
+                ),
+                TextSpan(
+                  text: "  You are revoking all previous allowances given to ",
+                ),
+                TextSpan(
+                  text: Utilities.truncateIfAddress(allowance.spender.with0x, leadingDigits: 8, trailingDigits: 8),
+                  style: TextStyle(color: Colors.grey[400], fontWeight: FontWeight.w800),
+                ),
+                TextSpan(
+                  text: " of your account's ",
+                ),
+                WidgetSpan(
+                  child: SizedBox(
+                    width: 14,
+                    height: 14,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(70),
+                      child: metadata.logoUri == "unknown" ? Container(
+                        alignment: Alignment.center,
+                        color: Colors.grey,
+                        child: Text("?", style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),),
+                      ) : Image.network(metadata.logoUri),
+                    ),
+                  ),
+                ),
+                TextSpan(
+                  text: " ${metadata.name} (${metadata.symbol})",
+                  style: TextStyle(color: Colors.grey[400], fontWeight: FontWeight.w800),
+                ),
+                TextSpan(
+                  text: " balance",
+                ),
+              ]
+            ),
           ),
           drawSeparatorLine ? Container(
             margin: EdgeInsets.only(top: 8),
@@ -494,11 +701,118 @@ class _SafeTxSimulationScreenState extends State<SafeTxSimulationScreen> {
     );
   }
 
+  Widget _buildDangerousTransactionCard(BuildContext context) {
+    final dangerousObject = widget.simulationResult.dangerous;
+    String title = 'DANGEROUS TRANSACTION';
+    String description = '';
+    final dangerousType = dangerousObject.$2;
+    final dangerousData = dangerousObject.$3 as (EthereumAddress, EthereumAddress);
+    if (dangerousType == DangerousTransactionType.SINGLETON_CHANGE) {
+      description = 'This transaction attempts to change the Safe singleton contract. This is extremely dangerous and should never be approved unless you explicitly opted in to upgrading your account’s contracts and are absolutely certain about the implications. The Safe contract is the core of your account security. If you are not completely sure about this action, abort the transaction immediately and consult the official Safe support channels before proceeding.';
+    } else {
+      description = 'This transaction has been identified as potentially dangerous. Please exercise extreme caution before proceeding. Do not approve unless you fully understand what this transaction does.';
+    }
+    return Card(
+      elevation: 4,
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.dangerous_rounded, color: Colors.red, size: 24),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.red,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(Icons.error, color: Colors.red, size: 20),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    description,
+                    style: TextStyle(
+                      color: Colors.red[800],
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            if (dangerousType == DangerousTransactionType.SINGLETON_CHANGE)
+              Column(
+                mainAxisAlignment: MainAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 8,),
+                  Text(
+                    "New Singleton address",
+                    style: TextStyle(
+                      color: Colors.red[800],
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 4,),
+                  _AddressWidget(
+                    address: dangerousData.$2.eip55With0x,
+                    showBlockies: false,
+                    truncateSize: 14,
+                    style: TextStyle(
+                      color: Colors.red[800],
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.red[900]!.withAlpha((255*0.1).toInt()),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.red, width: 2),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.block, color: Colors.red[700]),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'WARNING: This transaction could result in loss of funds. Only proceed if you are completely certain about what you are doing.',
+                      style: TextStyle(
+                        color: Colors.red[700],
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildCard(
     BuildContext context, {
     required String title,
     required IconData icon,
     required Widget child,
+    Widget? infoIcon,
   }) {
     return Card(
       elevation: 2,
@@ -518,6 +832,8 @@ class _SafeTxSimulationScreenState extends State<SafeTxSimulationScreen> {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
+                Spacer(),
+                if (infoIcon != null) infoIcon,
               ],
             ),
             const SizedBox(height: 12),
@@ -532,12 +848,14 @@ class _SafeTxSimulationScreenState extends State<SafeTxSimulationScreen> {
 
 class _AddressWidget extends StatelessWidget {
   final String address;
+  final bool showBlockies;
   final double size;
   final int truncateSize;
   final TextStyle? style;
   const _AddressWidget({
     super.key,
     required this.address,
+    this.showBlockies=true,
     this.size=25,
     this.truncateSize=8,
     this.style
@@ -547,21 +865,22 @@ class _AddressWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        SizedBox(
-          width: size,
-          height: size,
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(70),
-            child: Blockies(
-              seed: address,
-              color: Colors.teal,
-              spotColor: Colors.white,
-              bgColor: Colors.greenAccent,
-              size: 8,
+        if (showBlockies)
+          SizedBox(
+            width: size,
+            height: size,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(70),
+              child: Blockies(
+                seed: address,
+                color: Colors.teal,
+                spotColor: Colors.white,
+                bgColor: Colors.greenAccent,
+                size: 8,
+              ),
             ),
           ),
-        ),
-        SizedBox(width: 5),
+        SizedBox(width: showBlockies ? 5 : 0),
         Text(
           Utilities.truncateIfAddress(address, leadingDigits: truncateSize, trailingDigits: truncateSize),
           style: style,

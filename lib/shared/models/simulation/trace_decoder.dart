@@ -1,4 +1,5 @@
 import 'package:safe_verify/shared/models/network_model.dart';
+import 'package:safe_verify/shared/models/safe_transaction_model.dart';
 import 'package:safe_verify/shared/models/simulation/safe_setting_change.dart';
 import 'package:safe_verify/shared/models/simulation/simulation_result.dart';
 import 'package:safe_verify/shared/models/simulation/token_allowance.dart';
@@ -23,9 +24,76 @@ var _logsMapping = {
   "0x1151116914515bc0891ff9047a6cb32cf902546f83066499bcf8ba33d2353fa2": "safe-guard-change",
 };
 
-class TraceDecoder {
+var _trustedSingletons = {
+  "0xb6029EA3B2c51D09a50B53CA8012FeEB05bDa35A".toLowerCase(), // 1.0.0
+  //
+  "0x34CfAC646f301356fAa8B21e94227e3583Fe3F5F".toLowerCase(), // 1.1.1
+  //
+  "0x6851D6fDFAfD08c0295C392436245E5bc78B0185".toLowerCase(), // 1.2.0
+  //
+  "0xd9Db270c1B5E3Bd161E8c8503c55cEABeE709552".toLowerCase(), // 1.3.0
+  "0x69f4D1788e39c87893C980c06EdF4b7f686e2938".toLowerCase(), // 1.3.0
+  "0xB00ce5CCcdEf57e539ddcEd01DF43a13855d9910".toLowerCase(), // 1.3.0
+  "0x3E5c63644E683549055b9Be8653de26E0B4CD36E".toLowerCase(), // 1.3.0 L2
+  "0xfb1bffC9d739B8D520DaF37dF666da4C687191EA".toLowerCase(), // 1.3.0 L2
+  "0x1727c2c531cf966f902E5927b98490fDFb3b2b70".toLowerCase(), // 1.3.0 L2
+  //
+  "0x41675C099F32341bf84BFc5382aF534df5C7461a".toLowerCase(), // 1.4.1
+  "0xC35F063962328aC65cED5D4c3fC5dEf8dec68dFa".toLowerCase(), // 1.4.1
+  "0x29fcB43b46531BcA003ddC8FCB67FFE91900C762".toLowerCase(), // 1.4.1 L2
+  "0x610fcA2e0279Fa1F8C00c8c2F71dF522AD469380".toLowerCase(), // 1.4.1 L2
+  //
+  "0xFf51A5898e281Db6DfC7855790607438dF2ca44b".toLowerCase(), // 1.5.0
+  "0xEdd160fEBBD92E350D4D398fb636302fccd67C7e".toLowerCase(), // 1.5.0 L2
+};
 
-  static dynamic processLog(String account, Network network, Map<String, dynamic> log){
+var _trustedDelegatees = {
+  // MultiSend
+  "0x8D29bE29923b68abfDD21e541b9374737B49cdAD".toLowerCase(), // 1.1.1
+  "0xA238CBeb142c10Ef7Ad8442C6D1f9E89e07e7761".toLowerCase(), // 1.3.0
+  "0x998739BFdAAdde7C933B942a68053933098f9EDa".toLowerCase(), // 1.3.0
+  "0x0dFcccB95225ffB03c6FBB2559B530C2B7C8A912".toLowerCase(), // 1.3.0
+  "0x38869bf66a61cF6bDB996A6aE40D5853Fd43B526".toLowerCase(), // 1.4.1
+  "0x309D0B190FeCCa8e1D5D8309a16F7e3CB133E885".toLowerCase(), // 1.4.1
+  "0x218543288004CD07832472D464648173c77D7eB7".toLowerCase(), // 1.5.0
+  // MultiSendCallOnly
+  "0x40A2aCCbd92BCA938b02010E17A5b8929b49130D".toLowerCase(), // 1.3.0
+  "0xA1dabEF33b3B82c7814B6D82A79e50F4AC44102B".toLowerCase(), // 1.3.0
+  "0xf220D3b4DFb23C4ade8C88E526C1353AbAcbC38F".toLowerCase(), // 1.3.0
+  "0x9641d764fc13c8B624c04430C7356C1C7C8102e2".toLowerCase(), // 1.4.1
+  "0x0408EF011960d02349d50286D20531229BCef773".toLowerCase(), // 1.4.1
+  "0xA83c336B20401Af773B6219BA5027174338D1836".toLowerCase(), // 1.5.0
+};
+
+class TraceDecoder {
+  String accountSingleton;
+  List<TokenTransfer> transfers = [];
+  List<TokenAllowance> allowances = [];
+  List<SafeSettingChange> safeSettingsChanges = [];
+  List<WarningTransaction> warningTransactions = [];
+
+
+  TraceDecoder({required this.accountSingleton});
+
+  // Remove any existing allowance (same token, same spender) in the list if exists
+  // (This assumes that tokens follow the ERC-20 standard, and overwrites the allowance on multiple approvals)
+  bool _removeExistingAllowance(EthereumAddress token, EthereumAddress spender){
+    var index = -1;
+    for (var i=0; i<allowances.length; i++){
+      var allowance = allowances[i];
+      if (allowance.token == token && allowance.spender == spender){
+        index = i;
+        break;
+      }
+    }
+    if (index != -1){
+      allowances.removeAt(index);
+      return true;
+    }
+    return false;
+  }
+
+  dynamic processLog(String account, Network network, Map<String, dynamic> log){
     account = account.toLowerCase();
     var topics = (log["topics"] as List<dynamic>).cast<String>();
     var eventSignature = topics[0].toLowerCase();
@@ -50,10 +118,13 @@ class TraceDecoder {
         if (owner.with0x.toLowerCase() != account) return null;
         var spender = decodeAbi(["address"], hexToBytes(topics[2]))[0] as EthereumAddress;
         var amount = decodeAbi(["uint256"], hexToBytes(log["data"]))[0] as BigInt;
+        var removed = _removeExistingAllowance(emittedBy, spender);
+        if (removed && amount == BigInt.zero) return null; // Approval and allowance was spent in same tx, in this case no warning is needed since it'll be shown in balance changes
         return TokenAllowance(
           token: emittedBy,
           spender: spender,
-          amount: amount
+          amount: amount,
+          network: network
         );
       }else if (eventName == "safe-owner-addition"){
         var addedOwner = decodeAbi(["address"], hexToBytes(topics[1]))[0] as EthereumAddress;
@@ -102,38 +173,60 @@ class TraceDecoder {
     return null;
   }
 
-  static void processCall(String account, Network network, Map<String, dynamic> call, List<TokenTransfer> result){
+  void processCall(String account, Network network, Map<String, dynamic> call){
     var from = call["inputs"]["caller"].toString().toLowerCase();
     var to = call["inputs"]["target_address"].toString().toLowerCase();
-    if (from == account.toLowerCase() || to == account.toLowerCase()){
-      var inputValue = call["inputs"]["value"] as Map<String, dynamic>;
-      if (inputValue.containsKey("Transfer")){
-        var amount = BigInt.parse(inputValue["Transfer"].toString().replaceFirst("0x", ""), radix: 16);
-        if (amount > BigInt.zero){
-          var sender = EthereumAddress.fromHex(from);
-          var recipient = EthereumAddress.fromHex(to);
-          if (sender != recipient){
-            result.add(
-              TokenTransfer(
-                token: EthereumAddress.fromHex("0x0000000000000000000000000000000000000000"),
-                sender: sender,
-                recipient: recipient,
-                amount: amount,
-                network: network
-              )
-            );
+    var bytecodeAddress = call["inputs"]["bytecode_address"].toString().toLowerCase();
+    var callScheme = call["inputs"]["scheme"].toString();
+    var accountAddress = account.toLowerCase();
+    if (callScheme == "DelegateCall"){
+      if (to == accountAddress && bytecodeAddress != accountAddress){
+        if (
+          bytecodeAddress != accountSingleton
+          && !_trustedDelegatees.contains(bytecodeAddress)
+        ){
+          warningTransactions.add(
+            WarningTransaction(
+              type: WarningTransactionType.DELEGATE_CALL,
+              data: [
+                EthereumAddress.fromHex(bytecodeAddress),
+                call["input_bytes"]
+              ]
+            )
+          );
+        }
+      }
+    }else{
+      if (from == accountAddress || to == accountAddress){
+        var inputValue = call["inputs"]["value"] as Map<String, dynamic>;
+        if (inputValue.containsKey("Transfer")){
+          var amount = BigInt.parse(inputValue["Transfer"].toString().replaceFirst("0x", ""), radix: 16);
+          if (amount > BigInt.zero){
+            var sender = EthereumAddress.fromHex(from);
+            var recipient = EthereumAddress.fromHex(to);
+            if (sender != recipient){
+              transfers.add(
+                TokenTransfer(
+                  token: EthereumAddress.fromHex("0x0000000000000000000000000000000000000000"),
+                  sender: sender,
+                  recipient: recipient,
+                  amount: amount,
+                  network: network
+                )
+              );
+            }
           }
         }
       }
     }
     if (call["calls"].length > 0){
       for (var _internalCall in call["calls"]){
-        processCall(account, network, _internalCall, result);
+        processCall(account, network, _internalCall);
       }
     }
   }
 
-  static SimulationResult decode(String account, Network network, Map<String, dynamic> trace){
+  SimulationResult decode(String account, SafeTransaction transaction, Network network, Map<String, dynamic> trace){
     var executionResult = trace["execution_result"] as Map<String, dynamic>;
     if (!executionResult.containsKey("Success")) {
       String revertReason = executionResult["Revert"]["output"];
@@ -143,16 +236,31 @@ class TraceDecoder {
       return SimulationResult(
         success: false,
         revertReason: revertReason,
-        transfers: [],
-        allowances: [],
-        safeSettingsChanges: [],
-        warningTransactions: []
+        dangerous: (false, null, ""),
+        transfers: transfers,
+        allowances: allowances,
+        safeSettingsChanges: safeSettingsChanges,
+        warningTransactions: warningTransactions
       );
     }
-    List<TokenTransfer> transfers = [];
-    List<TokenAllowance> allowances = [];
-    List<SafeSettingChange> safeSettingsChanges = [];
-    List<WarningTransaction> warningTransactions = [];
+    //
+    var isDangerous = false;
+    DangerousTransactionType? dangerousType;
+    dynamic dangerousData;
+    var stateDiff = trace["state_diff"] as Map<String, dynamic>;
+    if (stateDiff.containsKey(account.toLowerCase())){
+      var accountStorageDiff = stateDiff[account.toLowerCase()]["storage"] as Map<String, dynamic>;
+      if (accountStorageDiff.containsKey("0x0")){
+        var slotZeroDiff = accountStorageDiff["0x0"] as Map<String, dynamic>;
+        if (slotZeroDiff["original_value"] != slotZeroDiff["present_value"]){
+          if (slotZeroDiff["present_value"] != accountSingleton){
+            isDangerous = true;
+            dangerousType = DangerousTransactionType.SINGLETON_CHANGE;
+            dangerousData = (EthereumAddress.fromHex(accountSingleton), EthereumAddress.fromHex(slotZeroDiff["present_value"]));
+          }
+        }
+      }
+    }
     //
     var logs = executionResult["Success"]["logs"];
     for (var log in logs){
@@ -169,13 +277,12 @@ class TraceDecoder {
       }
     }
     //
-    List<TokenTransfer> nativeTokenTransfers = [];
     var callFrame = trace["trace"];
-    processCall(account, network, callFrame, nativeTokenTransfers);
-    transfers.addAll(nativeTokenTransfers);
+    processCall(account, network, callFrame);
     return SimulationResult(
       success: true,
       revertReason: "0x",
+      dangerous: (isDangerous, dangerousType, dangerousData),
       transfers: transfers,
       allowances: allowances,
       safeSettingsChanges: safeSettingsChanges,

@@ -199,8 +199,14 @@ class SafeTransaction {
       callData,
       stateOverrides
     );
+    var accountSingleton = decodeAbi(["address"], hexToBytes(prestate[accountAddress]["storage"]["0x0000000000000000000000000000000000000000000000000000000000000000"]))[0] as EthereumAddress;
     var trace = await evmTracer.revmTrace(from, accountAddress, callData, (block, prestate), false);
-    var simulationResult = TraceDecoder.decode(account.address, account.network, jsonDecode(trace));
+    var simulationResult = TraceDecoder(accountSingleton: accountSingleton.with0x.toLowerCase()).decode(
+      account.address,
+      this,
+      account.network,
+      jsonDecode(trace)
+    );
     return (true, simulationResult, "");
   }
 
