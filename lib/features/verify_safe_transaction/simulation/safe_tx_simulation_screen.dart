@@ -1,11 +1,16 @@
+import 'dart:async';
+
 import 'package:blockies/blockies.dart';
 import 'package:dotted_line/dotted_line.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:safe_verify/core/theme/theme_config.dart';
-import 'package:safe_verify/features/verify_safe_transaction/simulation/warning_sheets/allowance_warning_sheet.dart';
+import 'package:media_kit/media_kit.dart';
+import 'package:media_kit_video/media_kit_video.dart';
+import 'package:safe_verify/shared/constants/constants.dart';
 import 'package:safe_verify/shared/models/safe_account_model.dart';
 import 'package:safe_verify/shared/models/safe_transaction_model.dart';
+import 'package:safe_verify/shared/models/simulation/nft_allowance.dart';
+import 'package:safe_verify/shared/models/simulation/nft_transfer.dart';
 import 'package:safe_verify/shared/models/simulation/safe_setting_change.dart';
 import 'package:safe_verify/shared/models/simulation/simulation_result.dart';
 import 'package:safe_verify/shared/models/simulation/token_allowance.dart';
@@ -133,11 +138,21 @@ class _SafeTxSimulationScreenState extends State<SafeTxSimulationScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            isDangerous ? _buildDangerousTransactionCard(context) : SizedBox.shrink(),
-            SizedBox(height: isDangerous ? 16 : 0),
+            if (isDangerous) ...[
+              _buildDangerousTransactionCard(context),
+              const SizedBox(height: 16),
+            ],
             _buildBalanceChangesCard(context),
             const SizedBox(height: 16),
             _buildAllowancesCard(context),
+            if (widget.simulationResult.nftTransfers.isNotEmpty) ...[
+              const SizedBox(height: 16),
+              _buildNFTTransfersCard(context),
+            ],
+            if (widget.simulationResult.nftAllowances.isNotEmpty) ...[
+              const SizedBox(height: 16),
+              _buildNFTAllowancesCard(context),
+            ],
             const SizedBox(height: 16),
             _buildSafeSettingsChangesCard(context),
             const SizedBox(height: 16),
@@ -301,21 +316,6 @@ class _SafeTxSimulationScreenState extends State<SafeTxSimulationScreen> {
       context,
       title: 'Allowances',
       icon: Icons.shopping_bag,
-      infoIcon: IconButton(
-        icon: const Icon(Icons.info_outline_rounded, size: 16, color: Colors.amber,),
-        onPressed: () {
-          showModalBottomSheet(
-            context: context,
-            builder: (context) => const AllowanceWarningSheet(),
-            isScrollControlled: true,
-            showDragHandle: true,
-            useSafeArea: true,
-            shape: RoundedRectangleBorder(
-              borderRadius: ThemeConfig.borderRadiusLarge,
-            )
-          );
-        },
-      ),
       child: ListView.builder(
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
@@ -332,7 +332,7 @@ class _SafeTxSimulationScreenState extends State<SafeTxSimulationScreen> {
     if (allowance.amount == BigInt.zero) return _buildRevokedAllowanceItem(allowance, drawSeparatorLine);
     final metadata = allowance.metadata!;
     var readableAmount = "";
-    if (allowance.amount == BigInt.parse("ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", radix: 16)){
+    if (allowance.amount == maxUint256){
       readableAmount = "∞";
     }else{
       readableAmount = Utilities.formatCryptoAmount(allowance.amount, metadata.decimals);
@@ -466,6 +466,181 @@ class _SafeTxSimulationScreenState extends State<SafeTxSimulationScreen> {
                 ),
               ]
             ),
+          ),
+          drawSeparatorLine ? Container(
+            margin: EdgeInsets.only(top: 8),
+            child: DottedLine(
+              direction: Axis.horizontal,
+              dashColor: Colors.white54,
+              dashGapLength: 2.5,
+            ),
+          ) : SizedBox.shrink()
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNFTTransfersCard(BuildContext context) {
+    final nftTransfers = widget.simulationResult.nftTransfers;
+    return _buildCard(
+      context,
+      title: 'NFT Transfers',
+      icon: Icons.image,
+      child: ListView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        itemCount: nftTransfers.length,
+        itemBuilder: (context, index) {
+          final nftTransfer = nftTransfers[index];
+          return _buildNFTTransferItem(nftTransfer, index == nftTransfers.length-1 ? false : true);
+        },
+      ),
+    );
+  }
+
+  Widget _buildNFTTransferItem(NFTTransfer nftTransfer, bool drawSeparatorLine) {
+    var isReceived = false;
+    if (nftTransfer.recipient.with0x.toLowerCase() == widget.safeAccount.address.toLowerCase()){
+      isReceived = true;
+    }
+    final metadata = nftTransfer.metadata!;
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      child: Column(
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              _buildNFTImage(metadata.imageURI, size: 40),
+              SizedBox(width: 8,),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '${metadata.collectionName} (${metadata.symbol})',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    Text(
+                      'Token ID: ${nftTransfer.tokenId}',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey[600],
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                isReceived ? Icons.arrow_downward : Icons.arrow_upward,
+                color: isReceived ? Colors.green : Colors.red,
+                size: 20,
+              ),
+            ],
+          ),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                isReceived ? 'From' : 'To',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey[600],
+                ),
+              ),
+              Spacer(),
+              Text(
+                Utilities.truncateIfAddress(isReceived ? nftTransfer.sender.with0x : nftTransfer.recipient.with0x, leadingDigits: 8, trailingDigits: 8),
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey[600],
+                ),
+              ),
+            ],
+          ),
+          drawSeparatorLine ? Container(
+            margin: EdgeInsets.only(top: 8),
+            child: DottedLine(
+              direction: Axis.horizontal,
+              dashColor: Colors.white54,
+              dashGapLength: 2.5,
+            ),
+          ) : SizedBox.shrink()
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNFTAllowancesCard(BuildContext context) {
+    final nftAllowances = widget.simulationResult.nftAllowances;
+    return _buildCard(
+      context,
+      title: 'NFT Allowances',
+      icon: Icons.collections,
+      child: ListView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        itemCount: nftAllowances.length,
+        itemBuilder: (context, index) {
+          final nftAllowance = nftAllowances[index];
+          return _buildNFTAllowanceItem(nftAllowance, index == nftAllowances.length-1 ? false : true);
+        },
+      ),
+    );
+  }
+
+  Widget _buildNFTAllowanceItem(NFTAllowance nftAllowance, bool drawSeparatorLine) {
+    final metadata = nftAllowance.metadata!;
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      child: Column(
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildNFTImage(metadata.imageURI, size: 50),
+              const SizedBox(width: 8),
+              Expanded(
+                child: RichText(
+                  text: TextSpan(
+                    style: TextStyle(fontSize: 12, color: Colors.grey[600], fontWeight: FontWeight.bold),
+                    children: [
+                      WidgetSpan(
+                        child: Icon(Icons.warning_amber, size: 13, color: Colors.orange,)
+                      ),
+                      TextSpan(
+                        text: "  You are giving ",
+                      ),
+                      TextSpan(
+                        text: Utilities.truncateIfAddress(nftAllowance.spender.with0x, leadingDigits: 8, trailingDigits: 8),
+                        style: TextStyle(color: Colors.grey[400], fontWeight: FontWeight.w800),
+                      ),
+                      TextSpan(
+                        text: " permission to transfer NFT ",
+                      ),
+                      TextSpan(
+                        text: "${metadata.collectionName} (${metadata.symbol})",
+                        style: TextStyle(color: Colors.grey[400], fontWeight: FontWeight.w800),
+                      ),
+                      TextSpan(
+                        text: " with Token ID ",
+                      ),
+                      TextSpan(
+                        text: "${nftAllowance.tokenId}",
+                        style: TextStyle(color: Colors.grey[400], fontWeight: FontWeight.w800),
+                      ),
+                      TextSpan(
+                        text: " from your account",
+                      ),
+                    ]
+                  ),
+                ),
+              ),
+            ],
           ),
           drawSeparatorLine ? Container(
             margin: EdgeInsets.only(top: 8),
@@ -844,6 +1019,163 @@ class _SafeTxSimulationScreenState extends State<SafeTxSimulationScreen> {
     );
   }
 
+  Widget _buildNFTImage(String? imageURI, {double size = 40}) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          color: Colors.grey[800],
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: imageURI != null && imageURI.isNotEmpty
+          ? _NFTMediaPlayer(
+              mediaUrl: imageURI,
+              size: size,
+            )
+          : Icon(
+              Icons.image_not_supported,
+              size: size * 0.6,
+              color: Colors.grey[600],
+            ),
+      ),
+    );
+  }
+
+}
+
+class _NFTMediaPlayer extends StatefulWidget {
+  final String mediaUrl;
+  final double size;
+
+  const _NFTMediaPlayer({
+    required this.mediaUrl,
+    required this.size,
+  });
+
+  @override
+  State<_NFTMediaPlayer> createState() => _NFTMediaPlayerState();
+}
+
+class _NFTMediaPlayerState extends State<_NFTMediaPlayer> {
+  Player? _player;
+  VideoController? _videoController;
+  bool _isVideo = false;
+  bool _videoInitialized = false;
+  bool _checkingVideo = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _attemptVideoInitialization();
+  }
+
+  Future<void> _attemptVideoInitialization() async {
+    try {
+      _player = Player();
+      _videoController = VideoController(_player!);
+
+      // Set a timeout for video initialization
+      await _player!.open(Media(widget.mediaUrl)).timeout(
+        const Duration(seconds: 5),
+        onTimeout: () {
+          throw TimeoutException('Video initialization timeout');
+        },
+      );
+
+      // Wait a bit for the video to buffer and check if it's valid
+      await Future.delayed(const Duration(milliseconds: 500));
+
+      if (mounted && _player != null) {
+        setState(() {
+          _isVideo = true;
+          _videoInitialized = true;
+          _checkingVideo = false;
+          // Configure video playback like a GIF
+          _player!.setPlaylistMode(PlaylistMode.loop);
+          _player!.setVolume(0.0); // Muted like GIFs
+          _player!.play();
+        });
+      }
+    } catch (e) {
+      // If video initialization fails, fall back to image
+      if (mounted) {
+        setState(() {
+          _isVideo = false;
+          _checkingVideo = false;
+        });
+      }
+      _player?.dispose();
+      _player = null;
+      _videoController = null;
+    }
+  }
+
+  @override
+  void dispose() {
+    _player?.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // While checking if it's a video, show loading
+    if (_checkingVideo) {
+      return Center(
+        child: SizedBox(
+          width: widget.size * 0.5,
+          height: widget.size * 0.5,
+          child: CircularProgressIndicator(
+            strokeWidth: 2,
+          ),
+        ),
+      );
+    }
+
+    // If it's a video and initialized, show video player
+    if (_isVideo && _videoInitialized && _videoController != null) {
+      return SizedBox(
+        width: widget.size,
+        height: widget.size,
+        child: Video(
+          controller: _videoController!,
+          fit: BoxFit.cover,
+          controls: NoVideoControls,
+        ),
+      );
+    }
+
+    // Fall back to image
+    return Image.network(
+      widget.mediaUrl,
+      width: widget.size,
+      height: widget.size,
+      fit: BoxFit.cover,
+      loadingBuilder: (context, child, loadingProgress) {
+        if (loadingProgress == null) return child;
+        return Center(
+          child: SizedBox(
+            width: widget.size * 0.5,
+            height: widget.size * 0.5,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              value: loadingProgress.expectedTotalBytes != null
+                ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                : null,
+            ),
+          ),
+        );
+      },
+      errorBuilder: (context, error, stackTrace) {
+        return Icon(
+          Icons.broken_image,
+          size: widget.size * 0.6,
+          color: Colors.grey[600],
+        );
+      },
+    );
+  }
 }
 
 class _AddressWidget extends StatelessWidget {

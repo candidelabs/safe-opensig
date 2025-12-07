@@ -1,7 +1,6 @@
 import 'dart:convert';
 
-import 'package:safe_verify/rust/api/trace.dart';
-import 'package:safe_verify/rust/frb_generated.dart';
+import 'package:revm_tracer/revm_tracer.dart';
 import 'package:safe_verify/shared/utils/extensions/bigint_extensions.dart';
 import 'package:safe_verify/shared/utils/utilities.dart';
 import 'package:web3dart/web3dart.dart';
@@ -39,11 +38,11 @@ class EVMTracer {
   }
 
   Future<dynamic> revmTrace(
-    String from,
-    String to,
-    String data,
-    (Map<String, dynamic>, Map<String, dynamic>)? prestate,
-    bool isOpStack,
+      String from,
+      String to,
+      String data,
+      (Map<String, dynamic>, Map<String, dynamic>)? prestate,
+      bool isOpStack,
   ) async {
     prestate ??= await getTransactionPrestate(from, to, data, {});
     if (!rustLibInitiated){
@@ -55,7 +54,7 @@ class EVMTracer {
     var blockRaw = jsonEncode(prestate.$1);
     var traceRaw = jsonEncode(prestate.$2);
     var chainId = await provider.getChainId();
-    var traceResult = revmTraceTransaction(
+    var traceResult = RevmTracer.revmTrace(
       chainId: chainId,
       from: from,
       fromNonce: BigInt.from(0),

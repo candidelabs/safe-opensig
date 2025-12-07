@@ -9,7 +9,7 @@ class TokenMetadata {
   String symbol;
   int decimals;
   String logoUri;
-  static Map<String, (String, String, int, String)> _metadataCache = {};
+  static final Map<String, (String, String, int, String)> _metadataCache = {};
 
   TokenMetadata({
     required this.name,

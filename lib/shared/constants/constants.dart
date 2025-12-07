@@ -1,0 +1,1 @@
+final maxUint256 = BigInt.parse("ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", radix: 16);

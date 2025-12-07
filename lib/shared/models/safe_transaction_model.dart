@@ -201,13 +201,28 @@ class SafeTransaction {
     );
     var accountSingleton = decodeAbi(["address"], hexToBytes(prestate[accountAddress]["storage"]["0x0000000000000000000000000000000000000000000000000000000000000000"]))[0] as EthereumAddress;
     var trace = await evmTracer.revmTrace(from, accountAddress, callData, (block, prestate), false);
-    var simulationResult = TraceDecoder(accountSingleton: accountSingleton.with0x.toLowerCase()).decode(
-      account.address,
-      this,
-      account.network,
-      jsonDecode(trace)
-    );
-    return (true, simulationResult, "");
+    try {
+      var simulationResult = TraceDecoder(accountSingleton: accountSingleton.with0x.toLowerCase()).decode(
+        account.address,
+        this,
+        account.network,
+        jsonDecode(trace)
+      );
+      return (true, simulationResult, "");
+    } catch (e) {
+      print(e);
+      return (false, SimulationResult(
+          success: false,
+          revertReason: "0x",
+          dangerous: (false, null, null),
+          transfers: [],
+          allowances: [],
+          nftTransfers: [],
+          nftAllowances: [],
+          safeSettingsChanges: [],
+          warningTransactions: []
+      ), "");
+    }
   }
 
 }

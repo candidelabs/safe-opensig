@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:safe_verify/core/storage/accounts_box.dart';
 import 'package:safe_verify/core/storage/misc_box.dart';
 import 'package:safe_verify/core/theme/theme_config.dart';
 import 'package:safe_verify/features/account_management/account_state_provider.dart';

@@ -24,6 +24,9 @@ dependencies:
   smooth_page_indicator: ^1.2.1
   dotted_line: 3.2.3
   blockies: ^0.1.2
+  media_kit: ^1.2.3
+  media_kit_video: ^2.0.1
+  media_kit_libs_video: ^1.0.7
   # Navigation
   go_router: ^16.1.0
   event_bus: ^2.0.1
@@ -43,9 +46,8 @@ dependencies:
   version: ^3.0.0
   flutter_dotenv: ^6.0.0
   # Rust Bridge
-  rust_lib_safe_verify:
-    path: rust_builder
-  flutter_rust_bridge: 2.11.1
+  revm_tracer:
+    git: https://github.com/candidelabs/revm-tracer
 
 dev_dependencies:
   flutter_test:

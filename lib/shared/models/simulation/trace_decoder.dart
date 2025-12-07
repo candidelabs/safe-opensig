@@ -1,5 +1,8 @@
+import 'package:safe_verify/shared/constants/constants.dart';
 import 'package:safe_verify/shared/models/network_model.dart';
 import 'package:safe_verify/shared/models/safe_transaction_model.dart';
+import 'package:safe_verify/shared/models/simulation/nft_allowance.dart';
+import 'package:safe_verify/shared/models/simulation/nft_transfer.dart';
 import 'package:safe_verify/shared/models/simulation/safe_setting_change.dart';
 import 'package:safe_verify/shared/models/simulation/simulation_result.dart';
 import 'package:safe_verify/shared/models/simulation/token_allowance.dart';
@@ -10,8 +13,8 @@ import 'package:wallet/wallet.dart';
 import 'package:web3dart/web3dart.dart';
 
 var _logsMapping = {
-  "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef": "erc20-transfer",
-  "0x8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925": "erc20-allowance-change",
+  "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef": "token-transfer",
+  "0x8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925": "token-allowance-change",
   //
   "0x9465fa0c962cc76958e6373a993326400c1c94f8be2fe3a952adfa7f60b2ea26": "safe-owner-addition",
   "0xf8d49fc529812e9a7c5c50e69c20f0dccc0db8fa95c98bc58cc9a4f1c1299eaf": "safe-owner-revocation",
@@ -69,6 +72,8 @@ class TraceDecoder {
   String accountSingleton;
   List<TokenTransfer> transfers = [];
   List<TokenAllowance> allowances = [];
+  List<NFTTransfer> nftTransfers = [];
+  List<NFTAllowance> nftAllowances = [];
   List<SafeSettingChange> safeSettingsChanges = [];
   List<WarningTransaction> warningTransactions = [];
 
@@ -93,6 +98,29 @@ class TraceDecoder {
     return false;
   }
 
+  // Deduct amount from existing allowance (same token, same spender) in the list if exists
+  // (This assumes that tokens follow the ERC-20 standard, and amount is deducted when transferFrom is invoked)
+  bool _deductAllowanceAmount(EthereumAddress token, EthereumAddress spender, BigInt amount){
+    for (var allowance in allowances){
+      if (allowance.token == token && allowance.spender == spender){
+        if (allowance.amount < maxUint256){
+          allowance.amount = allowance.amount - amount;
+          if (allowance.amount == BigInt.zero){
+            allowance.amount = BigInt.from(-1); // flag allowance to be later removed
+          }
+        }
+        return true;
+      }
+    }
+    return false;
+  }
+
+  // Removes all allowances where amount == -1, these are flagged allowances for removal (check _deductAllowanceAmount)
+  bool cleanAllowances(){
+    allowances.removeWhere((allowance) => allowance.amount == BigInt.from(-1));
+    return true;
+  }
+
   dynamic processLog(String account, Network network, Map<String, dynamic> log){
     account = account.toLowerCase();
     var topics = (log["topics"] as List<dynamic>).cast<String>();
@@ -101,31 +129,52 @@ class TraceDecoder {
       var eventName = _logsMapping[eventSignature]!;
       var emittedBy = EthereumAddress.fromHex(log["address"]);
       if (eventName.startsWith("safe") && emittedBy.with0x.toLowerCase() != account) return null;
-      if (eventName == "erc20-transfer"){
+      if (eventName == "token-transfer"){
         var sender = decodeAbi(["address"], hexToBytes(topics[1]))[0] as EthereumAddress;
         var recipient = decodeAbi(["address"], hexToBytes(topics[2]))[0] as EthereumAddress;
         if (sender.with0x.toLowerCase() != account && recipient.with0x.toLowerCase() != account) return null;
         var amount = decodeAbi(["uint256"], hexToBytes(log["data"]))[0] as BigInt;
-        return TokenTransfer(
-          token: emittedBy,
-          sender: sender,
-          recipient: recipient,
-          amount: amount,
-          network: network
-        );
-      } else if (eventName == "erc20-allowance-change"){
+        var isNFT = topics.length == 4; // ERC-721 Approval events can be distinguished from ERC-20 ones by topics length (NFT transfer events have all fields indexed, whilst the erc-20 events don't have the amount field indexed)
+        if (!isNFT){
+          return TokenTransfer(
+            token: emittedBy,
+            sender: sender,
+            recipient: recipient,
+            amount: amount,
+            network: network
+          );
+        }else{
+          return NFTTransfer(
+            collection: emittedBy,
+            sender: sender,
+            recipient: recipient,
+            tokenId: amount,
+            network: network
+          );
+        }
+      } else if (eventName == "token-allowance-change"){
         var owner = decodeAbi(["address"], hexToBytes(topics[1]))[0] as EthereumAddress;
         if (owner.with0x.toLowerCase() != account) return null;
         var spender = decodeAbi(["address"], hexToBytes(topics[2]))[0] as EthereumAddress;
         var amount = decodeAbi(["uint256"], hexToBytes(log["data"]))[0] as BigInt;
-        var removed = _removeExistingAllowance(emittedBy, spender);
-        if (removed && amount == BigInt.zero) return null; // Approval and allowance was spent in same tx, in this case no warning is needed since it'll be shown in balance changes
-        return TokenAllowance(
-          token: emittedBy,
-          spender: spender,
-          amount: amount,
-          network: network
-        );
+        var isNFT = topics.length == 4; // ERC-721 Approval events can be distinguished from ERC-20 ones by topics length (NFT transfer events have all fields indexed, whilst the erc-20 events don't have the amount field indexed)
+        if (!isNFT){
+          var removed = _removeExistingAllowance(emittedBy, spender);
+          if (removed && amount == BigInt.zero) return null; // Approval and allowance was spent in same tx, in this case no warning is needed since it'll be shown in balance changes
+          return TokenAllowance(
+            token: emittedBy,
+            spender: spender,
+            amount: amount,
+            network: network
+          );
+        }else{
+          return NFTAllowance(
+            collection: emittedBy,
+            spender: spender,
+            tokenId: amount,
+            network: network
+          );
+        }
       }else if (eventName == "safe-owner-addition"){
         var addedOwner = decodeAbi(["address"], hexToBytes(topics[1]))[0] as EthereumAddress;
         return SafeSettingChange(
@@ -174,95 +223,60 @@ class TraceDecoder {
   }
 
   void processCall(String account, Network network, Map<String, dynamic> call){
-    var from = call["inputs"]["caller"].toString().toLowerCase();
-    var to = call["inputs"]["target_address"].toString().toLowerCase();
-    var bytecodeAddress = call["inputs"]["bytecode_address"].toString().toLowerCase();
-    var callScheme = call["inputs"]["scheme"].toString();
+    var from = call["from"].toString().toLowerCase();
+    var to = call["to"].toLowerCase();
+    var callType = call["type"].toString();
     var accountAddress = account.toLowerCase();
-    if (callScheme == "DelegateCall"){
-      if (to == accountAddress && bytecodeAddress != accountAddress){
-        if (
-          bytecodeAddress != accountSingleton
-          && !_trustedDelegatees.contains(bytecodeAddress)
-        ){
+    if (callType == "DELEGATECALL"){
+      if (from == accountAddress){
+        if (to != accountSingleton && !_trustedDelegatees.contains(to)){
           warningTransactions.add(
             WarningTransaction(
               type: WarningTransactionType.DELEGATE_CALL,
               data: [
-                EthereumAddress.fromHex(bytecodeAddress),
-                call["input_bytes"]
+                EthereumAddress.fromHex(to),
+                call["input"]
               ]
             )
           );
         }
       }
-    }else{
+    }
+    if (callType == "CALL"){
+      var input = call["input"].toString();
+      // Transfers (inflows and outflows)
       if (from == accountAddress || to == accountAddress){
-        var inputValue = call["inputs"]["value"] as Map<String, dynamic>;
-        if (inputValue.containsKey("Transfer")){
-          var amount = BigInt.parse(inputValue["Transfer"].toString().replaceFirst("0x", ""), radix: 16);
-          if (amount > BigInt.zero){
-            var sender = EthereumAddress.fromHex(from);
-            var recipient = EthereumAddress.fromHex(to);
-            if (sender != recipient){
-              transfers.add(
-                TokenTransfer(
-                  token: EthereumAddress.fromHex("0x0000000000000000000000000000000000000000"),
-                  sender: sender,
-                  recipient: recipient,
-                  amount: amount,
-                  network: network
-                )
-              );
-            }
+        var amount = BigInt.parse(call["value"].toString().replaceFirst("0x", ''), radix: 16);
+        if (amount > BigInt.zero){
+          var sender = EthereumAddress.fromHex(from);
+          var recipient = EthereumAddress.fromHex(to);
+          if (sender != recipient){
+            transfers.add(
+              TokenTransfer(
+                token: EthereumAddress.fromHex("0x0000000000000000000000000000000000000000"),
+                sender: sender,
+                recipient: recipient,
+                amount: amount,
+                network: network
+              )
+            );
           }
         }
       }
-    }
-    if (call["calls"].length > 0){
-      for (var _internalCall in call["calls"]){
-        processCall(account, network, _internalCall);
-      }
-    }
-  }
-
-  SimulationResult decode(String account, SafeTransaction transaction, Network network, Map<String, dynamic> trace){
-    var executionResult = trace["execution_result"] as Map<String, dynamic>;
-    if (!executionResult.containsKey("Success")) {
-      String revertReason = executionResult["Revert"]["output"];
-      if (revertReason.startsWith("0x08c379a0")){
-        revertReason = decodeAbi(["string"], hexToBytes(revertReason.substring(10)))[0];
-      }
-      return SimulationResult(
-        success: false,
-        revertReason: revertReason,
-        dangerous: (false, null, ""),
-        transfers: transfers,
-        allowances: allowances,
-        safeSettingsChanges: safeSettingsChanges,
-        warningTransactions: warningTransactions
-      );
-    }
-    //
-    var isDangerous = false;
-    DangerousTransactionType? dangerousType;
-    dynamic dangerousData;
-    var stateDiff = trace["state_diff"] as Map<String, dynamic>;
-    if (stateDiff.containsKey(account.toLowerCase())){
-      var accountStorageDiff = stateDiff[account.toLowerCase()]["storage"] as Map<String, dynamic>;
-      if (accountStorageDiff.containsKey("0x0")){
-        var slotZeroDiff = accountStorageDiff["0x0"] as Map<String, dynamic>;
-        if (slotZeroDiff["original_value"] != slotZeroDiff["present_value"]){
-          if (slotZeroDiff["present_value"] != accountSingleton){
-            isDangerous = true;
-            dangerousType = DangerousTransactionType.SINGLETON_CHANGE;
-            dangerousData = (EthereumAddress.fromHex(accountSingleton), EthereumAddress.fromHex(slotZeroDiff["present_value"]));
+      if (input.replaceFirst("0x", '').length >= 8){
+        var selector = "0x${call["input"].toString().replaceAll("0x", '').substring(0, 8)}".toLowerCase();
+        var callData = call["input"].toString().replaceFirst("0x", '').substring(8);
+        // ERC-20 transferFrom
+        if (selector == "0x23b872dd"){
+          var params = decodeAbi(["address", "address", "uint256"], hexToBytes(callData));
+          if ((params[0] as EthereumAddress).with0x == accountAddress){
+            _deductAllowanceAmount(EthereumAddress.fromHex(to), params[1] as EthereumAddress, params[2] as BigInt);
           }
         }
       }
     }
     //
-    var logs = executionResult["Success"]["logs"];
+    var logs = call["logs"];
     for (var log in logs){
       var decodedLog = processLog(account, network, log);
       if (decodedLog == null) continue;
@@ -277,14 +291,64 @@ class TraceDecoder {
       }
     }
     //
-    var callFrame = trace["trace"];
+    if (call["calls"] != null && call["calls"].length > 0){
+      for (var _internalCall in call["calls"]){
+        processCall(account, network, _internalCall);
+      }
+    }
+  }
+
+  SimulationResult decode(String account, SafeTransaction transaction, Network network, Map<String, dynamic> trace){
+    var executionResult = trace["executionResult"] as Map<String, dynamic>;
+    if (!executionResult.containsKey("Success")) {
+      String revertReason = executionResult["Revert"]["output"];
+      if (revertReason.startsWith("0x08c379a0")){
+        revertReason = decodeAbi(["string"], hexToBytes(revertReason.substring(10)))[0];
+      }
+      return SimulationResult(
+        success: false,
+        revertReason: revertReason,
+        dangerous: (false, null, ""),
+        transfers: transfers,
+        allowances: allowances,
+        nftTransfers: nftTransfers,
+        nftAllowances: nftAllowances,
+        safeSettingsChanges: safeSettingsChanges,
+        warningTransactions: warningTransactions
+      );
+    }
+    //
+    var isDangerous = false;
+    DangerousTransactionType? dangerousType;
+    dynamic dangerousData;
+    var stateDiff = trace["stateDiff"] as Map<String, dynamic>;
+    if (stateDiff.containsKey(account.toLowerCase())){
+      var accountStorageDiff = stateDiff[account.toLowerCase()]["storage"] as Map<String, dynamic>;
+      if (accountStorageDiff.containsKey("0x0")){
+        var slotZeroDiff = accountStorageDiff["0x0"] as Map<String, dynamic>;
+        if (slotZeroDiff["original_value"] != slotZeroDiff["present_value"]){
+          if (slotZeroDiff["present_value"] != accountSingleton){
+            isDangerous = true;
+            dangerousType = DangerousTransactionType.SINGLETON_CHANGE;
+            dangerousData = (EthereumAddress.fromHex(accountSingleton), EthereumAddress.fromHex(slotZeroDiff["present_value"]));
+          }
+        }
+      }
+    }
+    //
+    var callFrame = trace["calls"];
     processCall(account, network, callFrame);
+    //
+    cleanAllowances();
+    //
     return SimulationResult(
       success: true,
       revertReason: "0x",
       dangerous: (isDangerous, dangerousType, dangerousData),
       transfers: transfers,
       allowances: allowances,
+      nftTransfers: nftTransfers,
+      nftAllowances: nftAllowances,
       safeSettingsChanges: safeSettingsChanges,
       warningTransactions: warningTransactions
     );
