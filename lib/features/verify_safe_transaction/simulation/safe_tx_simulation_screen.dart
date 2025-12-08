@@ -594,6 +594,11 @@ class _SafeTxSimulationScreenState extends State<SafeTxSimulationScreen> {
   }
 
   Widget _buildNFTAllowanceItem(NFTAllowance nftAllowance, bool drawSeparatorLine) {
+    // Check if this is a revocation (spender is zero address)
+    if (nftAllowance.spender.with0x.toLowerCase() == '0x0000000000000000000000000000000000000000') {
+      return _buildRevokedNFTAllowanceItem(nftAllowance, drawSeparatorLine);
+    }
+
     final metadata = nftAllowance.metadata!;
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
@@ -635,6 +640,58 @@ class _SafeTxSimulationScreenState extends State<SafeTxSimulationScreen> {
                       ),
                       TextSpan(
                         text: " from your account",
+                      ),
+                    ]
+                  ),
+                ),
+              ),
+            ],
+          ),
+          drawSeparatorLine ? Container(
+            margin: EdgeInsets.only(top: 8),
+            child: DottedLine(
+              direction: Axis.horizontal,
+              dashColor: Colors.white54,
+              dashGapLength: 2.5,
+            ),
+          ) : SizedBox.shrink()
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRevokedNFTAllowanceItem(NFTAllowance nftAllowance, bool drawSeparatorLine) {
+    final metadata = nftAllowance.metadata!;
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      child: Column(
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildNFTImage(metadata.imageURI, size: 50),
+              const SizedBox(width: 8),
+              Expanded(
+                child: RichText(
+                  text: TextSpan(
+                    style: TextStyle(fontSize: 12, color: Colors.grey[600], fontWeight: FontWeight.bold),
+                    children: [
+                      WidgetSpan(
+                        child: Icon(Icons.check_circle_rounded, size: 13, color: Colors.green,)
+                      ),
+                      TextSpan(
+                        text: "  You are revoking the approval for NFT ",
+                      ),
+                      TextSpan(
+                        text: "${metadata.collectionName} (${metadata.symbol})",
+                        style: TextStyle(color: Colors.grey[400], fontWeight: FontWeight.w800),
+                      ),
+                      TextSpan(
+                        text: " with Token ID ",
+                      ),
+                      TextSpan(
+                        text: "${nftAllowance.tokenId}",
+                        style: TextStyle(color: Colors.grey[400], fontWeight: FontWeight.w800),
                       ),
                     ]
                   ),
