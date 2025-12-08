@@ -270,10 +270,13 @@ class TraceDecoder {
         var callData = call["input"].toString().replaceFirst("0x", '').substring(8);
         // ERC-20 transferFrom
         if (selector == "0x23b872dd"){
-          var params = decodeAbi(["address", "address", "uint256"], hexToBytes(callData));
-          if ((params[0] as EthereumAddress).with0x == accountAddress){
-            _deductAllowanceAmount(EthereumAddress.fromHex(to), params[1] as EthereumAddress, params[2] as BigInt);
-          }
+          // Place in a try-catch clause because abi decoding might throw in case another function other than transferFrom has a similar selector
+          try {
+            var params = decodeAbi(["address", "address", "uint256"], hexToBytes(callData));
+            if ((params[0] as EthereumAddress).with0x == accountAddress){
+              _deductAllowanceAmount(EthereumAddress.fromHex(to), params[1] as EthereumAddress, params[2] as BigInt);
+            }
+          } catch (e) {/*do nothing*/}
         }
       }
     }
