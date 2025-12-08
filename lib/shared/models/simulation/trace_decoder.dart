@@ -133,9 +133,9 @@ class TraceDecoder {
         var sender = decodeAbi(["address"], hexToBytes(topics[1]))[0] as EthereumAddress;
         var recipient = decodeAbi(["address"], hexToBytes(topics[2]))[0] as EthereumAddress;
         if (sender.with0x.toLowerCase() != account && recipient.with0x.toLowerCase() != account) return null;
-        var amount = decodeAbi(["uint256"], hexToBytes(log["data"]))[0] as BigInt;
         var isNFT = topics.length == 4; // ERC-721 Approval events can be distinguished from ERC-20 ones by topics length (NFT transfer events have all fields indexed, whilst the erc-20 events don't have the amount field indexed)
         if (!isNFT){
+          var amount = decodeAbi(["uint256"], hexToBytes(log["data"]))[0] as BigInt;
           return TokenTransfer(
             token: emittedBy,
             sender: sender,
@@ -144,11 +144,12 @@ class TraceDecoder {
             network: network
           );
         }else{
+          var tokenId = decodeAbi(["uint256"], hexToBytes(topics[3]))[0] as BigInt;
           return NFTTransfer(
             collection: emittedBy,
             sender: sender,
             recipient: recipient,
-            tokenId: amount,
+            tokenId: tokenId,
             network: network
           );
         }
@@ -156,9 +157,9 @@ class TraceDecoder {
         var owner = decodeAbi(["address"], hexToBytes(topics[1]))[0] as EthereumAddress;
         if (owner.with0x.toLowerCase() != account) return null;
         var spender = decodeAbi(["address"], hexToBytes(topics[2]))[0] as EthereumAddress;
-        var amount = decodeAbi(["uint256"], hexToBytes(log["data"]))[0] as BigInt;
         var isNFT = topics.length == 4; // ERC-721 Approval events can be distinguished from ERC-20 ones by topics length (NFT transfer events have all fields indexed, whilst the erc-20 events don't have the amount field indexed)
         if (!isNFT){
+          var amount = decodeAbi(["uint256"], hexToBytes(log["data"]))[0] as BigInt;
           var removed = _removeExistingAllowance(emittedBy, spender);
           if (removed && amount == BigInt.zero) return null; // Approval and allowance was spent in same tx, in this case no warning is needed since it'll be shown in balance changes
           return TokenAllowance(
@@ -168,10 +169,11 @@ class TraceDecoder {
             network: network
           );
         }else{
+          var tokenId = decodeAbi(["uint256"], hexToBytes(topics[3]))[0] as BigInt;
           return NFTAllowance(
             collection: emittedBy,
             spender: spender,
-            tokenId: amount,
+            tokenId: tokenId,
             network: network
           );
         }
@@ -284,6 +286,10 @@ class TraceDecoder {
         transfers.add(decodedLog);
       }else if (decodedLog is TokenAllowance){
         allowances.add(decodedLog);
+      }else if (decodedLog is NFTTransfer){
+        nftTransfers.add(decodedLog);
+      }else if (decodedLog is NFTAllowance){
+        nftAllowances.add(decodedLog);
       }else if (decodedLog is SafeSettingChange){
         safeSettingsChanges.add(decodedLog);
       }else if (decodedLog is WarningTransaction){
