@@ -17,6 +17,7 @@ import 'package:safe_verify/shared/models/simulation/token_allowance.dart';
 import 'package:safe_verify/shared/models/simulation/token_transfer.dart';
 import 'package:safe_verify/shared/models/simulation/warning_transaction.dart';
 import 'package:safe_verify/shared/utils/utilities.dart';
+import 'package:safe_verify/shared/widgets/trust_minimized_note.dart';
 import 'package:wallet/wallet.dart';
 
 class SafeTxSimulationScreen extends StatefulWidget {
@@ -138,6 +139,8 @@ class _SafeTxSimulationScreenState extends State<SafeTxSimulationScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            TrustMinimizedNote(),
+            const SizedBox(height: 16),
             if (isDangerous) ...[
               _buildDangerousTransactionCard(context),
               const SizedBox(height: 16),

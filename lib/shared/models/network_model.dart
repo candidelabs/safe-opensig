@@ -6,7 +6,7 @@ class Network extends Equatable {
   final String chainPrefix;
   final int chainId;
   final String nativeCurrencySymbol;
-  final Web3Client provider;
+  final List<Web3Client> providers;
   final String? logoUri;
 
   const Network({
@@ -14,9 +14,11 @@ class Network extends Equatable {
     required this.chainPrefix,
     required this.chainId,
     required this.nativeCurrencySymbol,
-    required this.provider,
+    required this.providers,
     this.logoUri,
   });
+
+  Web3Client get provider => providers.first;
 
   @override
   List<Object> get props => [chainId];

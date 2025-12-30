@@ -8,6 +8,7 @@ import 'package:safe_verify/features/verify_safe_transaction/hashes_verification
 import 'package:safe_verify/features/verify_safe_transaction/ledger_verification/safe_ledger_verify_screen.dart';
 import 'package:safe_verify/features/verify_safe_transaction/safe_transaction_form_screen.dart';
 import 'package:safe_verify/features/verify_safe_transaction/simulation/safe_tx_simulation_screen.dart';
+import 'package:safe_verify/features/verify_safe_transaction/simulation/simulation_loading_screen.dart';
 import 'package:safe_verify/shared/models/safe_account_model.dart';
 import 'package:safe_verify/shared/models/safe_transaction_model.dart';
 import 'package:safe_verify/shared/models/simulation/simulation_result.dart';
@@ -45,7 +46,21 @@ final GoRouter router = GoRouter(
       },
       routes: [
         GoRoute(
-          path: 'simulation',
+          path: 'simulation-loading',
+          builder: (context, state) {
+            final extra = state.extra as (SafeAccount, SafeTransaction, BigInt);
+            final SafeAccount safeAccount = extra.$1;
+            final SafeTransaction safeTx = extra.$2;
+            final BigInt nonce = extra.$3;
+            return SimulationLoadingScreen(
+              safeAccount: safeAccount,
+              transaction: safeTx,
+              nonce: nonce,
+            );
+          },
+        ),
+        GoRoute(
+          path: 'simulation-results',
           builder: (context, state) {
             final extra = state.extra as (SafeAccount, SafeTransaction, BigInt, SimulationResult);
             final SafeAccount safeAccount = extra.$1;

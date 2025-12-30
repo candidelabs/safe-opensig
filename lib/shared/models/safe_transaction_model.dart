@@ -4,7 +4,9 @@ import 'dart:typed_data';
 import 'package:safe_verify/shared/constants/safe_hashes.dart';
 import 'package:safe_verify/shared/models/safe_account_model.dart';
 import 'package:safe_verify/shared/models/simulation/evm_tracer.dart';
+import 'package:safe_verify/shared/models/simulation/simulation_phase.dart';
 import 'package:safe_verify/shared/models/simulation/simulation_result.dart';
+import 'package:safe_verify/shared/models/simulation/state_verifier/evm_state_verifier.dart';
 import 'package:safe_verify/shared/models/simulation/trace_decoder.dart';
 import 'package:safe_verify/shared/utils/abi_utils.dart';
 import 'package:safe_verify/shared/utils/extensions/bigint_extensions.dart';
@@ -177,31 +179,75 @@ class SafeTransaction {
     return (true, domainHash, messageHash, txHash);
   }
 
-  Future<(bool, SimulationResult?, String)> simulate(SafeAccount account, {BigInt? nonce}) async {
-    var (hashesSuccess, domainHash, messageHash, txHash) = await calculateHashes(account, nonce: nonce);
-    if (!hashesSuccess) return (false, null, domainHash);
-    var (signatures, storageLocationsOverrides) = await _getTransactionTracingSignatures(account, txHash);
-    var evmTracer = EVMTracer(provider: account.network.provider);
-    var from = Utilities.generateRandomEthereumAddress();
-    var callData  = getTransactionCallData(account, signatures);
-    //
-    var accountAddress = account.address.toLowerCase();
-    var stateOverrides = <String, dynamic>{};
-    stateOverrides[accountAddress] = {"stateDiff":{}};
-    stateOverrides[from] = {"balance": BigInt.parse("1000000000000000000000").toHex()};
-    for (var locationOverride in storageLocationsOverrides){
-      stateOverrides[accountAddress]["stateDiff"][locationOverride.$1] = locationOverride.$2;
-    }
-    //
-    var (block, prestate) = await evmTracer.getTransactionPrestate(
-      from,
-      accountAddress,
-      callData,
-      stateOverrides
-    );
-    var accountSingleton = decodeAbi(["address"], hexToBytes(prestate[accountAddress]["storage"]["0x0000000000000000000000000000000000000000000000000000000000000000"]))[0] as EthereumAddress;
-    var trace = await evmTracer.revmTrace(from, accountAddress, callData, (block, prestate), false);
+  Future<(bool, SimulationResult?, String)> simulate(
+    SafeAccount account, {
+    BigInt? nonce,
+    void Function(SimulationPhase)? onPhaseChange,
+  }) async {
     try {
+      // Fetching prestate
+      onPhaseChange?.call(SimulationPhase.fetchingPrestate);
+      var (hashesSuccess, domainHash, messageHash, txHash) = await calculateHashes(account, nonce: nonce);
+      if (!hashesSuccess) return (false, null, domainHash);
+      var (signatures, storageLocationsOverrides) = await _getTransactionTracingSignatures(account, txHash);
+      var evmTracer = EVMTracer(provider: account.network.provider);
+      var from = Utilities.generateRandomEthereumAddress();
+      var callData  = getTransactionCallData(account, signatures);
+      var accountAddress = account.address.toLowerCase();
+      var stateOverrides = <String, dynamic>{};
+      stateOverrides[accountAddress] = {"stateDiff":{}};
+      stateOverrides[from] = {"balance": BigInt.parse("1000000000000000000000").toHex()};
+      for (var locationOverride in storageLocationsOverrides){
+        stateOverrides[accountAddress]["stateDiff"][locationOverride.$1] = locationOverride.$2;
+      }
+      var (block, prestate) = await evmTracer.getTransactionPrestate(
+        from,
+        accountAddress,
+        callData,
+        stateOverrides
+      );
+      // Verifying state
+      onPhaseChange?.call(SimulationPhase.verifyingState);
+      // Create state verifier
+      var stateVerifier = EVMStateVerifier(
+        proofNodeClient: account.network.provider,
+        verificationNodesClients: account.network.providers,
+      );
+      // Extract block number and state root for verification
+      var blockNumber = BigInt.parse(block['number']);
+      var (_stateRootSucccess, stateRoot, _stateRootError) = await stateVerifier.getConsensusStateRoot(blockNumber: blockNumber);
+      if (!_stateRootSucccess) {
+        return (false, null, _stateRootError);
+      }
+      // Verify accounts in prestate with cryptographic proofs
+      for (var entry in prestate.entries) {
+        var prestateAccountAddress = EthereumAddress.fromHex(entry.key);
+        var accountData = jsonDecode(jsonEncode(entry.value));
+        if (prestateAccountAddress.with0x == from.toLowerCase()) continue; // skip the "from" account since this account is just for simulation purposes and doesn't have to be verified
+        var storage = (accountData['storage'] ?? <String, dynamic>{}) as Map<String, dynamic>;
+        // Remove overridden storage values from prestate
+        if (stateOverrides.containsKey(prestateAccountAddress.with0x)){
+          var stateDiff = ((stateOverrides[prestateAccountAddress.with0x]["stateDiff"] ?? {}) as Map<dynamic, dynamic>).cast<String, String>();
+          for (var stateDiffKey in stateDiff.keys){
+            storage.remove(stateDiffKey);
+          }
+        }
+        // Verify account state with cryptographic proof
+        var (success, error) = await stateVerifier.verify(
+          account: prestateAccountAddress,
+          storageKeys: storage.keys.toSet(),
+          expectedStorageValues: storage.cast<String, String>(),
+          blockNumber: blockNumber,
+          stateRoot: stateRoot,
+        );
+        if (!success) {
+          return (false, null, "State verification failed for ${prestateAccountAddress.with0x}: $error");
+        }
+      }
+      var accountSingleton = decodeAbi(["address"], hexToBytes(prestate[accountAddress]["storage"]["0x0000000000000000000000000000000000000000000000000000000000000000"]))[0] as EthereumAddress;
+      onPhaseChange?.call(SimulationPhase.simulating);
+      var trace = await evmTracer.revmTrace(from, accountAddress, callData, (block, prestate), false);
+      // Decode the simulation result
       var simulationResult = TraceDecoder(accountSingleton: accountSingleton.with0x.toLowerCase()).decode(
         account.address,
         this,
@@ -221,7 +267,7 @@ class SafeTransaction {
           nftAllowances: [],
           safeSettingsChanges: [],
           warningTransactions: []
-      ), "");
+      ), e.toString());
     }
   }
 

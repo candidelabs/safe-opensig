@@ -11,7 +11,11 @@ var availableNetworks = {
     chainPrefix: 'eth',
     chainId: 1,
     nativeCurrencySymbol: "ETH",
-    provider: Web3Client(dotenv.env['NODE_URL_ETHEREUM']!, Client()),
+    providers: [
+      Web3Client(dotenv.env['NODE_URL_ETHEREUM']!, Client()),
+      Web3Client("https://ethereum-rpc.publicnode.com", Client()),
+      Web3Client("https://eth.drpc.org", Client()),
+    ],
     logoUri: null,
   ),
   137: Network(
@@ -19,7 +23,11 @@ var availableNetworks = {
     chainPrefix: 'pol',
     chainId: 137,
     nativeCurrencySymbol: "POL",
-    provider: Web3Client(dotenv.env['NODE_URL_POLYGON']!, Client()),
+    providers: [
+      Web3Client(dotenv.env['NODE_URL_POLYGON']!, Client()),
+      Web3Client("https://polygon-bor-rpc.publicnode.com", Client()),
+      Web3Client("https://polygon.drpc.org", Client()),
+    ],
     logoUri: null,
   ),
   100: Network(
@@ -27,7 +35,11 @@ var availableNetworks = {
     chainPrefix: 'gno',
     chainId: 100,
     nativeCurrencySymbol: "xDAI",
-    provider: Web3Client(dotenv.env['NODE_URL_GNOSIS']!, Client()),
+    providers: [
+      Web3Client(dotenv.env['NODE_URL_GNOSIS']!, Client()),
+      Web3Client("https://gnosis-rpc.publicnode.com", Client()),
+      Web3Client("https://gnosis.drpc.org", Client()),
+    ],
     logoUri: null,
   ),
   56: Network(
@@ -35,7 +47,11 @@ var availableNetworks = {
     chainPrefix: 'bnb',
     chainId: 56,
     nativeCurrencySymbol: "BNB",
-    provider: Web3Client(dotenv.env['NODE_URL_BSC']!, Client()),
+    providers: [
+      Web3Client(dotenv.env['NODE_URL_BSC']!, Client()),
+      Web3Client("https://bsc-rpc.publicnode.com", Client()),
+      Web3Client("https://bsc.drpc.org", Client()),
+    ],
     logoUri: null,
   ),
   43114: Network(
@@ -43,7 +59,11 @@ var availableNetworks = {
     chainPrefix: 'avax',
     chainId: 43114,
     nativeCurrencySymbol: "AVAX",
-    provider: Web3Client(dotenv.env['NODE_URL_AVAX']!, Client()),
+    providers: [
+      Web3Client(dotenv.env['NODE_URL_AVAX']!, Client()),
+      Web3Client("https://avalanche-c-chain-rpc.publicnode.com", Client()),
+      Web3Client("https://avalanche.drpc.org", Client()),
+    ],
     logoUri: null,
   ),
   // L2s
@@ -52,7 +72,11 @@ var availableNetworks = {
     chainPrefix: 'oeth',
     chainId: 10,
     nativeCurrencySymbol: "ETH",
-    provider: Web3Client(dotenv.env['NODE_URL_OPTIMISM']!, Client()),
+    providers: [
+      Web3Client(dotenv.env['NODE_URL_OPTIMISM']!, Client()),
+      Web3Client("https://optimism-rpc.publicnode.com", Client()),
+      Web3Client("https://optimism.drpc.org", Client()),
+    ],
     logoUri: null,
   ),
   8453: Network(
@@ -60,7 +84,11 @@ var availableNetworks = {
     chainPrefix: 'base',
     chainId: 8453,
     nativeCurrencySymbol: "ETH",
-    provider: Web3Client(dotenv.env['NODE_URL_BASE']!, Client()),
+    providers: [
+      Web3Client(dotenv.env['NODE_URL_BASE']!, Client()),
+      Web3Client("https://base-rpc.publicnode.com", Client()),
+      Web3Client("https://base.drpc.org", Client()),
+    ],
     logoUri: null,
   ),
   480: Network(
@@ -68,7 +96,11 @@ var availableNetworks = {
     chainPrefix: 'wc',
     chainId: 480,
     nativeCurrencySymbol: "ETH",
-    provider: Web3Client(dotenv.env['NODE_URL_WORLDCHAIN']!, Client()),
+    providers: [
+      Web3Client(dotenv.env['NODE_URL_WORLDCHAIN']!, Client()),
+      Web3Client("https://worldchain-mainnet.g.alchemy.com/public", Client()),
+      Web3Client("https://worldchain.drpc.org", Client()),
+    ],
     logoUri: null,
   ),
   130: Network(
@@ -76,7 +108,11 @@ var availableNetworks = {
     chainPrefix: 'unichain',
     chainId: 130,
     nativeCurrencySymbol: "ETH",
-    provider: Web3Client(dotenv.env['NODE_URL_UNICHAIN']!, Client()),
+    providers: [
+      Web3Client(dotenv.env['NODE_URL_UNICHAIN']!, Client()),
+      Web3Client("https://unichain-rpc.publicnode.com", Client()),
+      Web3Client("https://unichain.drpc.org", Client()),
+    ],
     logoUri: null,
   ),
   42161: Network(
@@ -84,7 +120,11 @@ var availableNetworks = {
     chainPrefix: 'arb1',
     chainId: 42161,
     nativeCurrencySymbol: "ETH",
-    provider: Web3Client(dotenv.env['NODE_URL_ARBITRUM']!, Client()),
+    providers: [
+      Web3Client(dotenv.env['NODE_URL_ARBITRUM']!, Client()),
+      Web3Client("https://arbitrum-one-rpc.publicnode.com", Client()),
+      Web3Client("https://arbitrum.drpc.org", Client()),
+    ],
     logoUri: null,
   ),
   42220: Network(
@@ -92,7 +132,11 @@ var availableNetworks = {
     chainPrefix: 'celo',
     chainId: 42220,
     nativeCurrencySymbol: "CELO",
-    provider: Web3Client(dotenv.env['NODE_URL_CELO']!, Client()),
+    providers: [
+      Web3Client(dotenv.env['NODE_URL_CELO']!, Client()),
+      Web3Client("https://celo-rpc.publicnode.com", Client()),
+      Web3Client("https://celo.drpc.org", Client()),
+    ],
     logoUri: null,
   ),
 };
