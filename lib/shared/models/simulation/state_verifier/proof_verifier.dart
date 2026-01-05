@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 import 'package:hex/hex.dart';
 import 'package:web3dart/web3dart.dart';
+import 'rlp.dart';
 
 /// Represents a node in the Merkle Patricia Trie
 sealed class MptNode {
@@ -9,7 +10,7 @@ sealed class MptNode {
   MptNode(this.rlpEncoded);
 
   factory MptNode.fromRlp(Uint8List rlpData) {
-    final decoded = RlpDecoder.decode(rlpData);
+    final decoded = RLP.decode(rlpData);
 
     if (decoded.length == 17) {
       return BranchNode(rlpData, decoded);
@@ -129,7 +130,7 @@ class HexUtil {
   static Uint8List decode(String hex) {
     if (hex.startsWith('0x')) hex = hex.substring(2);
     if (hex.isEmpty) return Uint8List(0);
-    return Uint8List.fromList(HEX.decode(hex)); //
+    return Uint8List.fromList(HEX.decode(hex));
   }
 
   static String encode(Uint8List bytes) {
@@ -146,131 +147,6 @@ class HexUtil {
     if (hex.length % 2 != 0) hex = '0$hex';
 
     return hexToBytes(hex);
-  }
-}
-
-/// RLP decoder (simplified - todo use a rlp package)
-class RlpDecoder {
-  static List<dynamic> decode(Uint8List input) {
-    if (input.isEmpty) return [];
-    return _decodeItem(input, 0).$1 as List<dynamic>;
-  }
-
-  static (dynamic, int) _decodeItem(Uint8List input, int offset) {
-    if (offset >= input.length) {
-      throw RlpException('Offset out of bounds');
-    }
-
-    final prefix = input[offset];
-
-    if (prefix <= 0x7f) {
-      return (Uint8List.fromList([prefix]), offset + 1);
-    } else if (prefix <= 0xb7) {
-      final length = prefix - 0x80;
-      if (length == 0) return (Uint8List(0), offset + 1);
-      return (
-        Uint8List.fromList(input.sublist(offset + 1, offset + 1 + length)),
-        offset + 1 + length
-      );
-    } else if (prefix <= 0xbf) {
-      final lengthOfLength = prefix - 0xb7;
-      final length = _readLength(input, offset + 1, lengthOfLength);
-      final dataStart = offset + 1 + lengthOfLength;
-      return (
-        Uint8List.fromList(input.sublist(dataStart, dataStart + length)),
-        dataStart + length
-      );
-    } else if (prefix <= 0xf7) {
-      final length = prefix - 0xc0;
-      final dataStart = offset + 1;
-      return (
-        _decodeList(input, dataStart, dataStart + length),
-        dataStart + length
-      );
-    } else {
-      final lengthOfLength = prefix - 0xf7;
-      final length = _readLength(input, offset + 1, lengthOfLength);
-      final dataStart = offset + 1 + lengthOfLength;
-      return (
-        _decodeList(input, dataStart, dataStart + length),
-        dataStart + length
-      );
-    }
-  }
-
-  static int _readLength(Uint8List input, int offset, int lengthOfLength) {
-    int length = 0;
-    for (int i = 0; i < lengthOfLength; i++) {
-      length = (length << 8) | input[offset + i];
-    }
-    return length;
-  }
-
-  static List<dynamic> _decodeList(Uint8List input, int start, int end) {
-    final result = <dynamic>[];
-    int offset = start;
-    while (offset < end) {
-      final decoded = _decodeItem(input, offset);
-      result.add(decoded.$1);
-      offset = decoded.$2;
-    }
-    return result;
-  }
-}
-
-/// RLP encoder (simplified - todo use a rlp package)
-class RlpEncoder {
-  static Uint8List encode(dynamic input) {
-    if (input is Uint8List) {
-      return _encodeBytes(input);
-    } else if (input is List) {
-      return _encodeList(input);
-    } else {
-      throw RlpException('Invalid input type');
-    }
-  }
-
-  static Uint8List _encodeBytes(Uint8List input) {
-    if (input.length == 1 && input[0] < 0x80) {
-      return input;
-    } else if (input.length <= 55) {
-      return Uint8List.fromList([0x80 + input.length, ...input]);
-    } else {
-      final lengthBytes = _intToBytes(input.length);
-      return Uint8List.fromList([
-        0xb7 + lengthBytes.length,
-        ...lengthBytes,
-        ...input
-      ]);
-    }
-  }
-
-  static Uint8List _encodeList(List<dynamic> input) {
-    final encoded = <int>[];
-    for (final item in input) {
-      encoded.addAll(encode(item));
-    }
-
-    if (encoded.length <= 55) {
-      return Uint8List.fromList([0xc0 + encoded.length, ...encoded]);
-    } else {
-      final lengthBytes = _intToBytes(encoded.length);
-      return Uint8List.fromList([
-        0xf7 + lengthBytes.length,
-        ...lengthBytes,
-        ...encoded
-      ]);
-    }
-  }
-
-  static Uint8List _intToBytes(int value) {
-    if (value == 0) return Uint8List(0);
-    final bytes = <int>[];
-    while (value > 0) {
-      bytes.insert(0, value & 0xff);
-      value >>= 8;
-    }
-    return Uint8List.fromList(bytes);
   }
 }
 
@@ -297,14 +173,6 @@ class HashMismatchException extends ProofVerificationException {
 
   HashMismatchException(this.nodeIndex, this.expected, this.actual)
     : super('Hash mismatch at node $nodeIndex: expected $expected, got $actual');
-}
-
-class RlpException implements Exception {
-  final String message;
-  RlpException(this.message);
-
-  @override
-  String toString() => 'RlpException: $message';
 }
 
 class ProofVerifier {
@@ -493,7 +361,7 @@ class ProofVerifier {
     final accountProof = (proof['accountProof'] as List).cast<String>();
 
     // Build expected account RLP
-    final accountRlp = RlpEncoder.encode([
+    final accountRlp = RLP.encode([
       HexUtil.toMinimal(proof['nonce']),
       HexUtil.toMinimal(proof['balance']),
       HexUtil.decode(proof['storageHash']),
@@ -523,7 +391,7 @@ class ProofVerifier {
     Uint8List? expectedValue;
     if (valueBytes.isNotEmpty &&
         !(valueBytes.length == 1 && valueBytes[0] == 0)) {
-      expectedValue = RlpEncoder.encode(valueBytes);
+      expectedValue = RLP.encode(valueBytes);
     }
 
     return verifyProof(
