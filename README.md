@@ -1,6 +1,6 @@
-# Safe Verify Mobile App
+# Safe OpenSig
 
-Second factor verification for Safe accounts.
+The Verifiable Truth for Safe Treasury Execution.
 
 ## Table of Contents
 - [About](#about)
@@ -18,7 +18,27 @@ Second factor verification for Safe accounts.
 
 ## About
 
-Safe Verify is a mobile application designed to provide second factor verification for Safe transactions. It enhances the security of your Safe transaction flow by adding an additional layer of verification/simulation.
+Safe OpenSig is a mobile app designed for enterprise Safe signers. It eliminates the "Blind Signing" trap by reconstructing the truth of a transaction locally before it reaches a hardware signing device.
+
+By decoupling verification from the execution interface, Safe OpenSig provides a secure, isolated environment to audit transaction logic, simulate state changes, and verify cryptographic integrity.
+
+### The Objective
+
+Most signing flows rely on centralized APIs and "black box" logic. Safe OpenSig replaces trust with absolute certainty.
+
+1. Mitigate Blind Signing: Eliminate the risk of browser-based phishing, UI-injection attacks, and malicious payloads.
+2. Data Sovereignty: Transaction intent remains on-device. The architecture is local-first with zero telemetry and no third-party tracking.
+3. Deterministic Results: Shift from interface reliance to state verification.
+
+### Core Architecture
+
+Safe OpenSig operates on a three-pillar verification model:
+
+1. Local REVM Simulation: The app runs a private instance of Rust Ethereum Virtual Machin directly on the device to decode transaction logic and preview balance or permission changes.
+
+2. Cryptographic Integrity: Blockchain state is verified using Merkle Patricia Trie proofs (eth_getProof) fetched from independent nodes, ensuring the data is cryptographically sound.
+
+3. Hardware Emulation: The app provides a 1:1 digital mirror of Ledger Nano S, X, and Pro screens. This allows for the verification of physical prompts and hex-decoding character-for-character prior to device commitment.
 
 ## Tech Stack
 
