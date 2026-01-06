@@ -12,13 +12,11 @@ const bool _enablePhaseDelay = true;
 class SimulationLoadingScreen extends StatefulWidget {
   final SafeAccount safeAccount;
   final SafeTransaction transaction;
-  final BigInt nonce;
 
   const SimulationLoadingScreen({
     super.key,
     required this.safeAccount,
     required this.transaction,
-    required this.nonce,
   });
 
   @override
@@ -89,7 +87,7 @@ class _SimulationLoadingScreenState extends State<SimulationLoadingScreen> {
     if (mounted) {
       GoRouter.of(context).pushReplacement(
         '/verify-transaction/hashes',
-        extra: (widget.safeAccount, widget.transaction, widget.nonce),
+        extra: (widget.safeAccount, widget.transaction),
       );
     }
   }
@@ -98,7 +96,6 @@ class _SimulationLoadingScreenState extends State<SimulationLoadingScreen> {
     try {
       final (success, simulationResult, errorMessage) = await widget.transaction.simulate(
         widget.safeAccount,
-        nonce: widget.nonce,
         onPhaseChange: (phase) {
           _queuePhaseChange(phase);
         },
@@ -126,7 +123,7 @@ class _SimulationLoadingScreenState extends State<SimulationLoadingScreen> {
       if (mounted && !_isCancelled) {
         GoRouter.of(context).pushReplacement(
           "/verify-transaction/simulation-results",
-          extra: (widget.safeAccount, widget.transaction, widget.nonce, simulationResult),
+          extra: (widget.safeAccount, widget.transaction, simulationResult),
         );
       }
     } catch (e) {

@@ -48,6 +48,5 @@ abstract class HWContentGenerator {
     Version appVersion,
     SafeAccount account,
     SafeTransaction transaction,
-    BigInt nonce
   );
 }

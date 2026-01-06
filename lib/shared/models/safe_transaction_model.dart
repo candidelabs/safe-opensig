@@ -25,6 +25,8 @@ class SafeTransaction {
   BigInt gasPrice;
   String gasToken;
   String refundReceiver;
+  BigInt? nonce;
+  BigInt? latestNonce;
 
   SafeTransaction({
     required this.to,
@@ -36,6 +38,8 @@ class SafeTransaction {
     required this.gasPrice,
     required this.gasToken,
     required this.refundReceiver,
+    this.nonce,
+    this.latestNonce,
   });
 
   factory SafeTransaction.fromJson(Map<String, dynamic> json, bool legacyJson) {
@@ -49,8 +53,26 @@ class SafeTransaction {
       gasPrice: json['gasPrice'] as BigInt,
       gasToken: json['gasToken'] as String,
       refundReceiver: json['refundReceiver'] as String,
+      nonce: json.containsKey('nonce') ? BigInt.from(json['nonce'] as int) : null,
     );
   }
+
+  /// Ensures nonce is set by fetching it from the account if not already set
+  /// Also fetches and stores the latest nonce from the account for simulation
+  Future<(bool, String)> ensureNonce(SafeAccount account) async {
+    final fetchedNonce = await account.getNonce();
+    if (fetchedNonce == null) {
+      return (false, 'Failed to fetch nonce');
+    }
+    latestNonce = fetchedNonce;
+    // If nonce is not set (CallData input), use the latest nonce
+    if (nonce == null) {
+      nonce = fetchedNonce;
+    }
+    return (true, '');
+  }
+
+  bool get hasNonceMismatch => nonce != null && latestNonce != null && nonce != latestNonce;
 
   Future<(List<String>, List<(String, String)>)> _getTransactionTracingSignatures(SafeAccount account, String transactionHash) async {
     List<String> signatures = [];
@@ -110,18 +132,18 @@ class SafeTransaction {
     return "0x6a761202${bytesToHex(callData, include0x: false)}";
   }
 
-  Future<(bool, String)> getMessageHash(SafeAccount account, {BigInt? nonce}) async {
+  Future<(bool, String)> getMessageHash(SafeAccount account, {bool useLatestNonce = false}) async {
     String safeTxTypeHash = SAFE_TX_TYPEHASH;
     var accountVersion = Version.parse(account.version);
     if (accountVersion < Version.parse("1.0.0")){
       safeTxTypeHash = SAFE_TX_TYPEHASH_OLD;
     }
-    if (nonce == null){
-      nonce = await account.getNonce();
-      if (nonce == null){
-        return (false, "Failed to fetch nonce");
-      }
+    final (success, error) = await ensureNonce(account);
+    if (!success) {
+      return (false, error);
     }
+    // Use latestNonce for simulation, nonce for hash verification
+    final nonceToUse = useLatestNonce ? latestNonce! : nonce!;
     Uint8List message = encodeAbi(
         [
           "bytes32",
@@ -147,7 +169,7 @@ class SafeTransaction {
           gasPrice,
           EthereumAddress.fromHex(gasToken),
           EthereumAddress.fromHex(refundReceiver),
-          nonce,
+          nonceToUse,
         ]
     );
     var messageHash = bytesToHex(keccak256(message), include0x: true);
@@ -163,16 +185,14 @@ class SafeTransaction {
     return txHash;
   }
 
-  Future<(bool, String, String, String)> calculateHashes(SafeAccount account, {BigInt? nonce}) async {
-    if (nonce == null){
-      nonce = await account.getNonce();
-      if (nonce == null){
-        return (false, "Failed to fetch nonce", '', '');
-      }
+  Future<(bool, String, String, String)> calculateHashes(SafeAccount account, {bool useLatestNonce = false}) async {
+    final (success, error) = await ensureNonce(account);
+    if (!success) {
+      return (false, error, '', '');
     }
     var domainHash = account.getDomainHash();
-    var (success, messageHash) = await getMessageHash(account, nonce: nonce);
-    if (!success){
+    var (msgSuccess, messageHash) = await getMessageHash(account, useLatestNonce: useLatestNonce);
+    if (!msgSuccess){
       return (false, "Failed to calculate message hash", '', '');
     }
     var txHash = getTransactionHash(domainHash, messageHash);
@@ -181,13 +201,15 @@ class SafeTransaction {
 
   Future<(bool, SimulationResult?, String)> simulate(
     SafeAccount account, {
-    BigInt? nonce,
     void Function(SimulationPhase)? onPhaseChange,
   }) async {
     try {
+      final (nonceSuccess, nonceError) = await ensureNonce(account);
+      if (!nonceSuccess) return (false, null, nonceError);
       // Fetching prestate
       onPhaseChange?.call(SimulationPhase.fetchingPrestate);
-      var (hashesSuccess, domainHash, messageHash, txHash) = await calculateHashes(account, nonce: nonce);
+      // Use latestNonce for simulation to bypass on-chain nonce verification
+      var (hashesSuccess, domainHash, messageHash, txHash) = await calculateHashes(account, useLatestNonce: true);
       if (!hashesSuccess) return (false, null, domainHash);
       var (signatures, storageLocationsOverrides) = await _getTransactionTracingSignatures(account, txHash);
       var evmTracer = EVMTracer(provider: account.network.provider);

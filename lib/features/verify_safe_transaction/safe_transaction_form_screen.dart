@@ -69,12 +69,18 @@ class _SafeTransactionFormScreenState extends State<SafeTransactionFormScreen> {
 
   void _onSubmit() async {
     var cancelLoad = BotToast.showLoading();
-    var latestNonce = await widget.safeAccount.getNonce();
+    final (success, error) = await safeTransaction!.ensureNonce(widget.safeAccount);
     cancelLoad();
     if (!mounted) return;
+
+    if (!success) {
+      BotToast.showText(text: error);
+      return;
+    }
+
     GoRouter.of(context).push(
       "/verify-transaction/simulation-loading",
-      extra: (widget.safeAccount, safeTransaction!, latestNonce),
+      extra: (widget.safeAccount, safeTransaction!),
     );
   }
 

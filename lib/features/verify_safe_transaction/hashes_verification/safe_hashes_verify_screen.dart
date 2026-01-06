@@ -8,13 +8,11 @@ import 'package:safe_verify/shared/models/safe_account_model.dart';
 import 'package:safe_verify/shared/models/safe_transaction_model.dart';
 
 class SafeHashesVerifyScreen extends StatefulWidget {
-  final BigInt? latestNonce;
   final SafeAccount safeAccount;
   final SafeTransaction safeTransaction;
 
   const SafeHashesVerifyScreen({
     super.key,
-    this.latestNonce,
     required this.safeAccount,
     required this.safeTransaction,
   });
@@ -28,7 +26,7 @@ class _SafeHashesVerifyScreenState extends State<SafeHashesVerifyScreen> {
 
   @override
   void initState() {
-    nonce = widget.latestNonce;
+    nonce = widget.safeTransaction.nonce;
     super.initState();
   }
 
@@ -46,14 +44,14 @@ class _SafeHashesVerifyScreenState extends State<SafeHashesVerifyScreen> {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     _NonceControl(
-                      latestNonce: widget.latestNonce,
-                      onChange: (_nonce) => setState(() => nonce = _nonce),
+                      initialValue: widget.safeTransaction.nonce,
+                      latestNonce: widget.safeTransaction.latestNonce,
+                      onChange: (_nonce) => setState(() => widget.safeTransaction.nonce = _nonce),
                     ),
                     const SizedBox(height: 16),
                     _AccountDetailsCard(safeAccount: widget.safeAccount),
                     const SizedBox(height: 16),
                     _TransactionHashesCard(
-                      nonce: nonce,
                       safeAccount: widget.safeAccount,
                       safeTransaction: widget.safeTransaction,
                     ),
@@ -75,7 +73,7 @@ class _SafeHashesVerifyScreenState extends State<SafeHashesVerifyScreen> {
                           onPressed: () {
                             GoRouter.of(context).push(
                               "/verify-transaction/ledger",
-                              extra: (widget.safeAccount, widget.safeTransaction, nonce!)
+                              extra: (widget.safeAccount, widget.safeTransaction)
                             );
                           },
                           child: const Text('Verify Ledger Screens'),
@@ -207,12 +205,10 @@ class _AccountDetailsCardState extends State<_AccountDetailsCard>
 }
 
 class _TransactionHashesCard extends StatefulWidget {
-  final BigInt? nonce;
   final SafeAccount safeAccount;
   final SafeTransaction safeTransaction;
 
   const _TransactionHashesCard({
-    this.nonce,
     required this.safeAccount,
     required this.safeTransaction,
   });
@@ -231,7 +227,7 @@ class _TransactionHashesCardState extends State<_TransactionHashesCard> {
 
   @override
   Widget build(BuildContext context) {
-    widget.safeTransaction.calculateHashes(widget.safeAccount, nonce: widget.nonce).then((result) {
+    widget.safeTransaction.calculateHashes(widget.safeAccount).then((result) {
       if (!mounted) return;
       setState(() => _hashes = result);
     });
@@ -528,10 +524,11 @@ class _TransactionJsonCardState extends State<_TransactionJsonCard> with SingleT
 }
 
 class _NonceControl extends StatefulWidget {
+  final BigInt? initialValue;
   final BigInt? latestNonce;
   final Function(BigInt) onChange;
 
-  const _NonceControl({this.latestNonce, required this.onChange});
+  const _NonceControl({this.initialValue, this.latestNonce, required this.onChange});
 
   @override
   State<_NonceControl> createState() => _NonceControlState();
@@ -545,7 +542,7 @@ class _NonceControlState extends State<_NonceControl> {
   @override
   void initState() {
     super.initState();
-    _nonce = widget.latestNonce ?? BigInt.zero;
+    _nonce = widget.initialValue ?? BigInt.zero;
   }
 
   @override

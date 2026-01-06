@@ -114,7 +114,6 @@ class LedgerNanoSPlusContentGenerator extends HWContentGenerator {
     Version appVersion,
     SafeAccount account,
     SafeTransaction transaction,
-    BigInt nonce
   ) async {
     List<HWPageContent> result = [];
     result.add(HWPageContent(
@@ -147,7 +146,7 @@ class LedgerNanoSPlusContentGenerator extends HWContentGenerator {
       trail: "icon:chevron-right"
     ));
     //
-    var (_, messageHash) = await transaction.getMessageHash(account, nonce: nonce);
+    var (_, messageHash) = await transaction.getMessageHash(account);
     var messageHashLines = _getLinesForString(messageHash);
     messageHashLines = messageHashLines.map((e) => "text:normal:$e").toList();
     result.add(HWPageContent(

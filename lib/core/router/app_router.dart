@@ -48,29 +48,25 @@ final GoRouter router = GoRouter(
         GoRoute(
           path: 'simulation-loading',
           builder: (context, state) {
-            final extra = state.extra as (SafeAccount, SafeTransaction, BigInt);
+            final extra = state.extra as (SafeAccount, SafeTransaction);
             final SafeAccount safeAccount = extra.$1;
             final SafeTransaction safeTx = extra.$2;
-            final BigInt nonce = extra.$3;
             return SimulationLoadingScreen(
               safeAccount: safeAccount,
               transaction: safeTx,
-              nonce: nonce,
             );
           },
         ),
         GoRoute(
           path: 'simulation-results',
           builder: (context, state) {
-            final extra = state.extra as (SafeAccount, SafeTransaction, BigInt, SimulationResult);
+            final extra = state.extra as (SafeAccount, SafeTransaction, SimulationResult);
             final SafeAccount safeAccount = extra.$1;
             final SafeTransaction safeTx = extra.$2;
-            final BigInt latestNonce = extra.$3;
-            final SimulationResult simulationResult = extra.$4;
+            final SimulationResult simulationResult = extra.$3;
             return SafeTxSimulationScreen(
               safeAccount: safeAccount,
               transaction: safeTx,
-              nonce: latestNonce,
               simulationResult: simulationResult,
             );
           },
@@ -78,28 +74,24 @@ final GoRouter router = GoRouter(
         GoRoute(
           path: 'hashes',
           builder: (context, state) {
-            final extra = state.extra as (SafeAccount, SafeTransaction, BigInt?);
+            final extra = state.extra as (SafeAccount, SafeTransaction);
             final SafeAccount safeAccount = extra.$1;
             final SafeTransaction safeTx = extra.$2;
-            final BigInt? latestNonce = extra.$3;
             return SafeHashesVerifyScreen(
               safeAccount: safeAccount,
               safeTransaction: safeTx,
-              latestNonce: latestNonce,
             );
           },
         ),
         GoRoute(
           path: 'ledger',
           builder: (context, state) {
-            final extra = state.extra as (SafeAccount, SafeTransaction, BigInt);
+            final extra = state.extra as (SafeAccount, SafeTransaction);
             final SafeAccount safeAccount = extra.$1;
             final SafeTransaction safeTx = extra.$2;
-            final BigInt nonce = extra.$3;
             return SafeLedgerVerifyScreen(
               safeAccount: safeAccount,
               safeTransaction: safeTx,
-              nonce: nonce,
             );
           },
         ),

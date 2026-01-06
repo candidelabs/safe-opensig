@@ -11,8 +11,7 @@ import 'package:version/version.dart';
 class SafeLedgerVerifyScreen extends StatefulWidget {
   final SafeAccount safeAccount;
   final SafeTransaction safeTransaction;
-  final BigInt nonce;
-  const SafeLedgerVerifyScreen({super.key, required this.safeAccount, required this.safeTransaction, required this.nonce});
+  const SafeLedgerVerifyScreen({super.key, required this.safeAccount, required this.safeTransaction});
 
   @override
   State<SafeLedgerVerifyScreen> createState() => _SafeLedgerVerifyScreenState();
@@ -62,7 +61,6 @@ class _SafeLedgerVerifyScreenState extends State<SafeLedgerVerifyScreen> {
             Version.parse("0.0.0"), // todo add actual version
             widget.safeAccount,
             widget.safeTransaction,
-            widget.nonce
           ),
           builder: (BuildContext context, AsyncSnapshot snapshot) {
             if (snapshot.connectionState != ConnectionState.done){
