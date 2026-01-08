@@ -149,8 +149,22 @@ class _SafeTxSimulationScreenState extends State<SafeTxSimulationScreen> {
                       Icon(Icons.warning, color: Colors.orange),
                       const SizedBox(width: 12),
                       Expanded(
-                        child: Text(
-                          'This simulation runs against the account\'s current nonce rather than the nonce supplied in the transaction data. This allows the simulation to bypass the on-chain nonce verification check.',
+                        child: Text.rich(
+                          TextSpan(
+                            children: [
+                              TextSpan(text: 'Nonce Mismatch: '),
+                              TextSpan(
+                                text: 'Transaction nonce (${widget.transaction.nonce}) ',
+                                style: TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                              TextSpan(text: 'differs from current on-chain nonce '),
+                              TextSpan(
+                                text: '(${widget.transaction.latestNonce})',
+                                style: TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                              TextSpan(text: '. Simulation uses the current nonce to bypass on-chain checks.'),
+                            ],
+                          ),
                           style: TextStyle(color: Colors.orange.shade900),
                         ),
                       ),
