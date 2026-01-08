@@ -6,10 +6,12 @@ import 'package:go_router/go_router.dart';
 import 'package:keyboard_actions/keyboard_actions.dart';
 import 'package:safe_verify/core/router/app_router.dart';
 import 'package:safe_verify/core/theme/theme_config.dart';
-import 'package:safe_verify/features/verify_safe_transaction/hashes_verification/widgets/safe_tx_calldata_guide_sheet.dart';
-import 'package:safe_verify/features/verify_safe_transaction/hashes_verification/widgets/safe_tx_calldata_input.dart';
-import 'package:safe_verify/features/verify_safe_transaction/hashes_verification/widgets/safe_tx_json_guide_sheet.dart';
-import 'package:safe_verify/features/verify_safe_transaction/hashes_verification/widgets/safe_tx_json_input.dart';
+import 'package:safe_verify/features/verify_safe_transaction/widgets/safe_tx_api_guide_sheet.dart';
+import 'package:safe_verify/features/verify_safe_transaction/widgets/safe_tx_api_input.dart';
+import 'package:safe_verify/features/verify_safe_transaction/widgets/safe_tx_calldata_guide_sheet.dart';
+import 'package:safe_verify/features/verify_safe_transaction/widgets/safe_tx_calldata_input.dart';
+import 'package:safe_verify/features/verify_safe_transaction/widgets/safe_tx_json_guide_sheet.dart';
+import 'package:safe_verify/features/verify_safe_transaction/widgets/safe_tx_json_input.dart';
 import 'package:safe_verify/shared/models/safe_account_model.dart';
 import 'package:safe_verify/shared/models/safe_transaction_model.dart';
 import 'package:version/version.dart';
@@ -96,7 +98,7 @@ class _SafeTransactionFormScreenState extends State<SafeTransactionFormScreen> {
             config: KeyboardActionsConfig(
                 keyboardActionsPlatform: KeyboardActionsPlatform.ALL,
                 keyboardBarColor: Colors.grey[200],
-                actions: [
+                actions: currentIndex <= 1 ? [
                   KeyboardActionsItem(
                     focusNode: currentIndex == 0 ? _jsonFocusNode : _callDataFocusNode,
                     toolbarButtons: [
@@ -112,7 +114,7 @@ class _SafeTransactionFormScreenState extends State<SafeTransactionFormScreen> {
                       },
                     ]
                   ),
-                ]
+                ] : []
             ),
             child: SingleChildScrollView(
               child: ConstrainedBox(
@@ -125,25 +127,31 @@ class _SafeTransactionFormScreenState extends State<SafeTransactionFormScreen> {
                         Theme.of(context).colorScheme.onPrimary,
                         [
                           Text(
-                            "JSON",
+                            "Safe API",
                             style: currentIndex == 0 ? tabSelectedTextStyle : tabDeselectedTextStyle,
                             textAlign: TextAlign.center,
                           ),
                           Text(
-                            "CallData",
+                            "JSON",
                             style: currentIndex == 1 ? tabSelectedTextStyle : tabDeselectedTextStyle,
+                            textAlign: TextAlign.center,
+                          ),
+                          Text(
+                            "CallData",
+                            style: currentIndex == 2 ? tabSelectedTextStyle : tabDeselectedTextStyle,
                             textAlign: TextAlign.center,
                           ),
                         ],
                         cupertinoTabBarValueGetter,
                         (int index) {
-                          if (currentIndex == 0){
+                          if (currentIndex == 1){
                             _jsonController.clear();
                             _jsonFocusNode.unfocus();
-                          }else{
+                          }else if (currentIndex == 2){
                             _callDataController.clear();
                             _callDataFocusNode.unfocus();
                           }
+                          // No controller to clear for Safe API tab (index 0)
                           lastIndex = currentIndex;
                           setState(() {
                             safeTransaction = null;
@@ -169,7 +177,11 @@ class _SafeTransactionFormScreenState extends State<SafeTransactionFormScreen> {
                               child: child,
                             );
                           },
-                          child: currentIndex == 0 ? safeTxJsonTab() : safeTxCalldataTab(),
+                          child: currentIndex == 0
+                            ? safeTxApiTab()
+                            : currentIndex == 1
+                              ? safeTxJsonTab()
+                              : safeTxCalldataTab(),
                         ),
                       ),
                       const Spacer(),
@@ -276,6 +288,51 @@ class _SafeTransactionFormScreenState extends State<SafeTransactionFormScreen> {
               ),
               child: Text(
                 '💡 How to get this data',
+                style: ThemeConfig.textTheme.bodySmall,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget safeTxApiTab(){
+    return Container(
+      key: ValueKey<int>(currentIndex),
+      child: Column(
+        children: [
+          SafeTxAPIInput(
+            safeAccount: widget.safeAccount,
+            onValidInput: (safeTx){
+              setState(() => safeTransaction = safeTx);
+            },
+          ),
+          const SizedBox(height: 10),
+          Container(
+            alignment: Alignment.centerRight,
+            child: OutlinedButton(
+              onPressed: () {
+                showModalBottomSheet(
+                  context: context,
+                  builder: (context) => const SafeTxAPIGuideSheet(),
+                  isScrollControlled: true,
+                  showDragHandle: true,
+                  useSafeArea: true,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: ThemeConfig.borderRadiusLarge,
+                  )
+                );
+              },
+              style: ButtonStyle(
+                  padding: WidgetStatePropertyAll(EdgeInsets.symmetric(horizontal: 10, vertical: 4)),
+                  visualDensity: VisualDensity.compact,
+                  shape: WidgetStatePropertyAll(RoundedRectangleBorder(
+                    borderRadius: ThemeConfig.borderRadiusSmall
+                  ))
+              ),
+              child: Text(
+                '💡 About Safe API',
                 style: ThemeConfig.textTheme.bodySmall,
               ),
             ),

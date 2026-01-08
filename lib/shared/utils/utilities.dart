@@ -21,6 +21,11 @@ class Utilities {
     return "${matches.first.group(1)}...${matches.first.group(2)}";
   }
 
+  static String truncate(String input, {int leadingDigits=10, int trailingDigits=6}) {
+    if (input.length <= (leadingDigits+trailingDigits-3)) return input;
+    return '${input.substring(0, leadingDigits)}...${input.substring(input.length - trailingDigits)}';
+  }
+
   static String generateRandomEthereumAddress() {
     final random = Random.secure();
     final bytes = List<int>.generate(20, (_) => random.nextInt(256));
