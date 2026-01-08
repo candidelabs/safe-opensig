@@ -22,11 +22,9 @@ class SafeHashesVerifyScreen extends StatefulWidget {
 }
 
 class _SafeHashesVerifyScreenState extends State<SafeHashesVerifyScreen> {
-  BigInt? nonce;
 
   @override
   void initState() {
-    nonce = widget.safeTransaction.nonce;
     super.initState();
   }
 
