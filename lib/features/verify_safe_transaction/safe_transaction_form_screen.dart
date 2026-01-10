@@ -50,7 +50,10 @@ class _SafeTransactionFormScreenState extends State<SafeTransactionFormScreen> {
   SafeTransaction? safeTransaction;
   int lastIndex = 0;
   int currentIndex = 0;
+  int lastManualInputSubIndex = 0;
+  int manualInputSubIndex = 0;
   int cupertinoTabBarValueGetter() => currentIndex;
+  int manualInputSubTabBarValueGetter() => manualInputSubIndex;
 
   bool get isLegacyJson => Version.parse(widget.safeAccount.version) < Version.parse("1.0.0");
 
@@ -98,9 +101,9 @@ class _SafeTransactionFormScreenState extends State<SafeTransactionFormScreen> {
             config: KeyboardActionsConfig(
                 keyboardActionsPlatform: KeyboardActionsPlatform.ALL,
                 keyboardBarColor: Colors.grey[200],
-                actions: currentIndex <= 1 ? [
+                actions: currentIndex == 1 ? [
                   KeyboardActionsItem(
-                    focusNode: currentIndex == 0 ? _jsonFocusNode : _callDataFocusNode,
+                    focusNode: manualInputSubIndex == 0 ? _jsonFocusNode : _callDataFocusNode,
                     toolbarButtons: [
                       (node) {
                         return TextButton.icon(
@@ -132,26 +135,22 @@ class _SafeTransactionFormScreenState extends State<SafeTransactionFormScreen> {
                             textAlign: TextAlign.center,
                           ),
                           Text(
-                            "JSON",
+                            "Manual Input",
                             style: currentIndex == 1 ? tabSelectedTextStyle : tabDeselectedTextStyle,
-                            textAlign: TextAlign.center,
-                          ),
-                          Text(
-                            "CallData",
-                            style: currentIndex == 2 ? tabSelectedTextStyle : tabDeselectedTextStyle,
                             textAlign: TextAlign.center,
                           ),
                         ],
                         cupertinoTabBarValueGetter,
                         (int index) {
-                          if (currentIndex == 1){
-                            _jsonController.clear();
-                            _jsonFocusNode.unfocus();
-                          }else if (currentIndex == 2){
-                            _callDataController.clear();
-                            _callDataFocusNode.unfocus();
+                          if (currentIndex == 1) {
+                            if (manualInputSubIndex == 0) {
+                              _jsonController.clear();
+                              _jsonFocusNode.unfocus();
+                            } else if (manualInputSubIndex == 1) {
+                              _callDataController.clear();
+                              _callDataFocusNode.unfocus();
+                            }
                           }
-                          // No controller to clear for Safe API tab (index 0)
                           lastIndex = currentIndex;
                           setState(() {
                             safeTransaction = null;
@@ -179,9 +178,7 @@ class _SafeTransactionFormScreenState extends State<SafeTransactionFormScreen> {
                           },
                           child: currentIndex == 0
                             ? safeTxApiTab()
-                            : currentIndex == 1
-                              ? safeTxJsonTab()
-                              : safeTxCalldataTab(),
+                            : manualInputTab(),
                         ),
                       ),
                       const Spacer(),
@@ -203,7 +200,7 @@ class _SafeTransactionFormScreenState extends State<SafeTransactionFormScreen> {
 
   Widget safeTxJsonTab(){
     return Container(
-      key: ValueKey<int>(currentIndex),
+      key: ValueKey<int>(manualInputSubIndex),
       child: Column(
         children: [
           SafeTxJsonInput(
@@ -251,7 +248,7 @@ class _SafeTransactionFormScreenState extends State<SafeTransactionFormScreen> {
 
   Widget safeTxCalldataTab(){
     return Container(
-      key: ValueKey<int>(currentIndex),
+      key: ValueKey<int>(manualInputSubIndex),
       child: Column(
         children: [
           SafeTxCalldataInput(
@@ -336,6 +333,103 @@ class _SafeTransactionFormScreenState extends State<SafeTransactionFormScreen> {
                 style: ThemeConfig.textTheme.bodySmall,
               ),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget manualInputTab(){
+    return Container(
+      key: ValueKey<int>(currentIndex),
+      child: Column(
+        children: [
+          const SizedBox(height: 10),
+          CupertinoTabBar(
+            Theme.of(context).colorScheme.primary,
+            Theme.of(context).colorScheme.onPrimary,
+            [
+              RichText(
+                textAlign: TextAlign.center,
+                text: TextSpan(
+                  children: [
+                    TextSpan(
+                      text: "Signing",
+                      style: manualInputSubIndex == 0 ? tabSelectedTextStyle : tabDeselectedTextStyle
+                    ),
+                    TextSpan(
+                      text: "\nJSON",
+                      style: TextStyle(
+                        color: manualInputSubIndex == 0
+                          ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.6)
+                          : Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.5),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w400,
+                        height: 1.0,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              RichText(
+                textAlign: TextAlign.center,
+                text: TextSpan(
+                  children: [
+                    TextSpan(
+                      text: "Executing",
+                      style: manualInputSubIndex == 1 ? tabSelectedTextStyle : tabDeselectedTextStyle
+                    ),
+                    TextSpan(
+                      text: "\nCallData",
+                      style: TextStyle(
+                        color: manualInputSubIndex == 1
+                          ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.6)
+                          : Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.5),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w400,
+                        height: 1.0,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+            manualInputSubTabBarValueGetter,
+            (int index) {
+              if (manualInputSubIndex == 0) {
+                _jsonController.clear();
+                _jsonFocusNode.unfocus();
+              } else if (manualInputSubIndex == 1) {
+                _callDataController.clear();
+                _callDataFocusNode.unfocus();
+              }
+              lastManualInputSubIndex = manualInputSubIndex;
+              setState(() {
+                safeTransaction = null;
+                manualInputSubIndex = index;
+              });
+            },
+            borderRadius: BorderRadius.circular(50),
+          ),
+          const SizedBox(height: 10),
+          PageTransitionSwitcher(
+            duration: const Duration(milliseconds: 500),
+            reverse: manualInputSubIndex < lastManualInputSubIndex,
+            transitionBuilder: (
+              child,
+              animation,
+              secondaryAnimation,
+            ) {
+              return SharedAxisTransition(
+                animation: animation,
+                secondaryAnimation: secondaryAnimation,
+                transitionType: SharedAxisTransitionType.horizontal,
+                child: child,
+              );
+            },
+            child: manualInputSubIndex == 0
+              ? safeTxJsonTab()
+              : safeTxCalldataTab(),
           ),
         ],
       ),
