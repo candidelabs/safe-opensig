@@ -244,7 +244,7 @@ class SafeTransaction {
       // Verify accounts in prestate with cryptographic proofs
       for (var entry in prestate.entries) {
         var prestateAccountAddress = EthereumAddress.fromHex(entry.key);
-        var accountData = jsonDecode(jsonEncode(entry.value));
+        var accountData = jsonDecode(jsonEncode(entry.value)) as Map<String, dynamic>;
         if (prestateAccountAddress.with0x == from.toLowerCase()) continue; // skip the "from" account since this account is just for simulation purposes and doesn't have to be verified
         var storage = (accountData['storage'] ?? <String, dynamic>{}) as Map<String, dynamic>;
         // Remove overridden storage values from prestate
@@ -254,11 +254,19 @@ class SafeTransaction {
             storage.remove(stateDiffKey);
           }
         }
+        //
+        var storageKeys = storage.keys.toSet();
+        var expectedStorageValues = storage.cast<String, String>();
+        // Avoid verifying storage values for accounts that have no code; these accounts are not yet deployed and appear in the prestate because they are created by the transaction.
+        if (!accountData.containsKey("code")){
+          storageKeys = {};
+          expectedStorageValues = {};
+        }
         // Verify account state with cryptographic proof
         var (success, error) = await stateVerifier.verify(
           account: prestateAccountAddress,
-          storageKeys: storage.keys.toSet(),
-          expectedStorageValues: storage.cast<String, String>(),
+          storageKeys: storageKeys,
+          expectedStorageValues: expectedStorageValues,
           blockNumber: blockNumber,
           stateRoot: stateRoot,
         );

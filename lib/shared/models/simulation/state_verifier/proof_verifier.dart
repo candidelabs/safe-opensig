@@ -360,13 +360,35 @@ class ProofVerifier {
     final addressBytes = HexUtil.decode(address);
     final accountProof = (proof['accountProof'] as List).cast<String>();
 
-    // Build expected account RLP
-    final accountRlp = RLP.encode([
-      HexUtil.toMinimal(proof['nonce']),
-      HexUtil.toMinimal(proof['balance']),
-      HexUtil.decode(proof['storageHash']),
-      HexUtil.decode(proof['codeHash']),
-    ]);
+    final nonce = proof['nonce'] as String;
+    final balance = proof['balance'] as String;
+    final storageHash = proof['storageHash'] as String;
+    final codeHash = proof['codeHash'] as String;
+
+    // Check if account doesn't exist (all default/empty values)
+    // keccak256(RLP(Uint8List(0))), verify the value here https://github.com/ethereum/go-ethereum/blob/v1.16.7/core/types/hashes.go, or run an eth_getProof request on a fresh EOA
+    const emptyStorageHash = '0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421';
+    // keccak256(Uint8List(0)), verify the value here https://github.com/ethereum/go-ethereum/blob/v1.16.7/core/types/hashes.go, or run an eth_getProof request on a fresh EOA
+    const emptyCodeHash = '0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470';
+    const zeroHash = '0x0000000000000000000000000000000000000000000000000000000000000000';
+
+    final accountDoesNotExist =
+      (nonce == '0x0' || nonce == '0x') &&
+      (balance == '0x0' || balance == '0x') &&
+      (storageHash.toLowerCase() == emptyStorageHash || storageHash.toLowerCase() == zeroHash) &&
+      (codeHash.toLowerCase() == emptyCodeHash || codeHash.toLowerCase() == zeroHash);
+
+    Uint8List? accountRlp;
+    if (!accountDoesNotExist) {
+      // Account exists - verify its values
+      accountRlp = RLP.encode([
+        HexUtil.toMinimal(nonce),
+        HexUtil.toMinimal(balance),
+        HexUtil.decode(storageHash),
+        HexUtil.decode(codeHash),
+      ]);
+    }
+    // If accountDoesNotExist, accountRlp stays null to verify absence
 
     return verifyProof(
       rootHash: stateRootBytes,
