@@ -1,5 +1,6 @@
 import 'package:hive_ce_flutter/hive_flutter.dart';
 import 'package:safe_verify/core/storage/accounts_box.dart';
+import 'package:safe_verify/shared/constants/event_bus.dart';
 
 class MiscBox {
   static late Box _box;
@@ -30,6 +31,7 @@ class MiscBox {
     } else {
       await _box.put(_selectedAccountIdKey, accountId);
     }
+    eventBus.fire(OnAccountStorageChange());
   }
 
   static String? getSelectedAccountId() {

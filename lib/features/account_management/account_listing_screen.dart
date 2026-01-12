@@ -1,20 +1,60 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:safe_verify/core/storage/accounts_box.dart';
 import 'package:safe_verify/core/storage/misc_box.dart';
 import 'package:safe_verify/core/theme/theme_config.dart';
-import 'package:safe_verify/features/account_management/account_state_provider.dart';
+import 'package:safe_verify/shared/constants/event_bus.dart';
 import 'package:safe_verify/shared/models/safe_account_model.dart';
 import 'package:safe_verify/shared/widgets/network_logo.dart';
 
-class AccountListingScreen extends ConsumerWidget {
+class AccountListingScreen extends StatefulWidget {
   const AccountListingScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final accounts = ref.watch(accountsProvider);
-    final selectedAccountId = MiscBox.getSelectedAccountId();
+  State<AccountListingScreen> createState() => _AccountListingScreenState();
+}
+
+class _AccountListingScreenState extends State<AccountListingScreen> {
+  late List<SafeAccount> _accounts;
+  late String? _selectedAccountId;
+  late StreamSubscription _accountChangesSubscription;
+
+  @override
+  void initState() {
+    _loadAccounts();
+    _accountChangesSubscription = eventBus.on<OnAccountStorageChange>().listen((event){
+      if (!mounted) return;
+      _loadAccounts();
+    });
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    _accountChangesSubscription.cancel();
+    super.dispose();
+  }
+
+  void _loadAccounts() {
+    setState(() {
+      _accounts = AccountsBox.getAccounts();
+      _selectedAccountId = MiscBox.getSelectedAccountId();
+    });
+  }
+
+  void _selectAccount(String accountId) {
+    MiscBox.setSelectedAccountId(accountId);
+    setState(() {
+      _selectedAccountId = accountId;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final accounts = _accounts;
+    final selectedAccountId = _selectedAccountId;
     return Scaffold(
       appBar: AppBar(
         title: const Text('Safe Accounts'),
@@ -35,9 +75,13 @@ class AccountListingScreen extends ConsumerWidget {
           return _AccountCard(
             account: account,
             isActive: account.id == selectedAccountId,
-            onTap: () {
-              ref.read(accountsProvider.notifier).selectAccount(account.id);
-              ref.invalidate(accountsProvider);
+            onTap: () => _selectAccount(account.id),
+            onDelete: () {
+              AccountsBox.removeAccount(account.id);
+              if (selectedAccountId == account.id) {
+                MiscBox.setSelectedAccountId(null);
+              }
+              _loadAccounts();
             },
           );
         },
@@ -59,11 +103,13 @@ class _AccountCard extends StatelessWidget {
   final SafeAccount account;
   final bool isActive;
   final VoidCallback onTap;
+  final VoidCallback onDelete;
 
   const _AccountCard({
     required this.account,
     required this.isActive,
     required this.onTap,
+    required this.onDelete,
   });
 
   @override
@@ -179,24 +225,23 @@ class _AccountCard extends StatelessWidget {
   }
 
   void _deleteAccount(BuildContext context, SafeAccount account) {
-    final container = ProviderScope.containerOf(context);
     showDialog(
       context: context,
-      builder: (BuildContext context) {
+      builder: (BuildContext dialogContext) {
         return AlertDialog(
           title: const Text('Delete Account'),
           content: Text('Are you sure you want to delete the account "${account.name}"?'),
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.of(context).pop();
+                Navigator.of(dialogContext).pop();
               },
               child: const Text('Cancel'),
             ),
             TextButton(
               onPressed: () {
-                container.read(accountsProvider.notifier).removeAccount(account.id);
-                Navigator.of(context).pop();
+                onDelete();
+                Navigator.of(dialogContext).pop();
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('Account deleted successfully!')),
                 );

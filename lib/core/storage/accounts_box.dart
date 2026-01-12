@@ -1,5 +1,6 @@
 import 'package:hive_ce_flutter/hive_flutter.dart';
 import 'package:safe_verify/core/storage/misc_box.dart';
+import 'package:safe_verify/shared/constants/event_bus.dart';
 import 'package:safe_verify/shared/models/safe_account_model.dart';
 
 class AccountsBox {
@@ -19,10 +20,12 @@ class AccountsBox {
     if (selectAccount){
       await MiscBox.setSelectedAccountId(account.id);
     }
+    eventBus.fire(OnAccountStorageChange());
   }
 
   static Future<void> removeAccount(String accountId) async {
     await _box.delete(accountId);
+    eventBus.fire(OnAccountStorageChange());
   }
 
   static List<SafeAccount> getAccounts() {
@@ -42,5 +45,6 @@ class AccountsBox {
 
   static Future<void> clearAll() async {
     await _box.clear();
+    eventBus.fire(OnAccountStorageChange());
   }
 }

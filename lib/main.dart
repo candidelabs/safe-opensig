@@ -5,7 +5,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_ce_flutter/hive_flutter.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:safe_verify/core/router/app_router.dart';
@@ -47,9 +46,7 @@ void main() async {
     });
   }
 
-  runApp(ProviderScope(
-    child: MyApp())
-  );
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {

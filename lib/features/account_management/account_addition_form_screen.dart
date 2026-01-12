@@ -1,10 +1,8 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:safe_verify/core/storage/accounts_box.dart';
-import 'package:safe_verify/features/account_management/account_state_provider.dart';
 import 'package:safe_verify/shared/constants/event_bus.dart';
 import 'package:safe_verify/shared/constants/network_constants.dart';
 import 'package:safe_verify/shared/models/network_model.dart';
@@ -16,16 +14,16 @@ import 'package:uuid/uuid.dart';
 import 'package:wallet/wallet.dart';
 import 'package:web3dart/web3dart.dart';
 
-class AccountAdditionFormScreen extends ConsumerStatefulWidget {
+class AccountAdditionFormScreen extends StatefulWidget {
   final SafeAccount? existingAccount;
-  
+
   const AccountAdditionFormScreen({super.key, this.existingAccount});
 
   @override
-  ConsumerState<AccountAdditionFormScreen> createState() => _AccountAdditionFormScreenState();
+  State<AccountAdditionFormScreen> createState() => _AccountAdditionFormScreenState();
 }
 
-class _AccountAdditionFormScreenState extends ConsumerState<AccountAdditionFormScreen> {
+class _AccountAdditionFormScreenState extends State<AccountAdditionFormScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _addressController = TextEditingController();
@@ -96,7 +94,7 @@ class _AccountAdditionFormScreenState extends ConsumerState<AccountAdditionFormS
           chainId: _selectedNetwork.value!.chainId,
           version: _selectedVersion!,
         );
-        ref.read(accountsProvider.notifier).addAccount(account);
+        AccountsBox.addAccount(account);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Account added successfully!')),
         );

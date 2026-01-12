@@ -9,9 +9,6 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  # State Management
-  flutter_riverpod: ^3.0.0-dev.17
-  riverpod_annotation: ^3.0.0-dev.17
   # UI
   animations: ^2.0.11
   cupertino_icons: ^1.0.8
@@ -54,9 +51,6 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   build_runner: ^2.6.0
-  custom_lint: ^0.8.0
-  riverpod_lint: ^3.0.0-dev.17
-  riverpod_generator: ^3.0.0-dev.17
   window_manager: ^0.5.1
   hive_ce_generator: ^1.9.3
   flutter_lints: ^6.0.0
