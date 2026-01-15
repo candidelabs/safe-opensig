@@ -4,12 +4,13 @@ import 'package:safe_verify/shared/constants/event_bus.dart';
 
 class MiscBox {
   static late Box _box;
-  static const String _miscBox = 'box:misc';
-  static const String _onboardingCompletedKey = 'key:$_miscBox:onboarding:completed';
-  static const String _selectedAccountIdKey = 'key:$_miscBox:accounts:selected-account-id';
+  static const String boxName = 'box:misc';
+  static const String _onboardingCompletedKey = 'key:$boxName:onboarding:completed';
+  static const String _selectedAccountIdKey = 'key:$boxName:safe-accounts:selected-account-id';
+  static const String _schemaVersionKey = 'key:$boxName:storage:schema-version';
 
   static Future<void> init() async {
-    _box = await Hive.openBox(_miscBox);
+    _box = await Hive.openBox(boxName);
   }
 
   static Future<void> markOnboardingAsCompleted() async {
@@ -36,5 +37,13 @@ class MiscBox {
 
   static String? getSelectedAccountId() {
     return _box.get(_selectedAccountIdKey, defaultValue: null);
+  }
+
+  static Future<void> setSchemaVersion(int version) async {
+    await _box.put(_schemaVersionKey, version);
+  }
+
+  static int getSchemaVersion() {
+    return _box.get(_schemaVersionKey, defaultValue: 0);
   }
 }

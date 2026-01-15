@@ -2,11 +2,11 @@ import 'package:hive_ce_flutter/hive_flutter.dart';
 
 class ThemeBox {
   static late Box _box;
-  static const String _themeBox = 'box:theme';
-  static const String _themeDarkModeKey = 'key:$_themeBox:dark-mode';
+  static const String boxName = 'box:theme';
+  static const String _themeDarkModeKey = 'key:$boxName:dark-mode';
 
   static Future<void> init() async {
-    _box = await Hive.openBox(_themeBox);
+    _box = await Hive.openBox(boxName);
   }
 
   static Future<void> setDarkMode(bool isDarkMode) async {

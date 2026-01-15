@@ -1,8 +1,10 @@
 import 'package:bot_toast/bot_toast.dart';
 import 'package:go_router/go_router.dart';
+import 'package:safe_verify/core/storage/migrations/migration_runner.dart';
 import 'package:safe_verify/core/storage/misc_box.dart';
 import 'package:safe_verify/features/account_management/account_addition_form_screen.dart';
 import 'package:safe_verify/features/account_management/account_listing_screen.dart';
+import 'package:safe_verify/features/migration/migration_splash_screen.dart';
 import 'package:safe_verify/features/onboarding/onboarding_screen.dart';
 import 'package:safe_verify/features/verify_safe_transaction/hashes_verification/safe_hashes_verify_screen.dart';
 import 'package:safe_verify/features/verify_safe_transaction/ledger_verification/safe_ledger_verify_screen.dart';
@@ -17,6 +19,10 @@ final GoRouter router = GoRouter(
   observers: [BotToastNavigatorObserver()],
   initialLocation: '/onboarding',
   routes: [
+    GoRoute(
+      path: '/migration',
+      builder: (context, state) => const MigrationSplashScreen(),
+    ),
     GoRoute(
       path: '/onboarding',
       builder: (context, state) => const OnboardingScreen(),
@@ -99,6 +105,17 @@ final GoRouter router = GoRouter(
     ),
   ],
   redirect: (context, state) async {
+    // Check migration first (highest priority)
+    final needsMigration = await HiveMigrationRunner.needsMigration();
+    if (needsMigration && state.uri.path != '/migration') {
+      return '/migration';
+    }
+
+    // Skip other redirects if on migration screen
+    if (state.uri.path == '/migration') {
+      return null;
+    }
+
     final isOnboardingCompleted = MiscBox.isOnboardingCompleted();
     if (isOnboardingCompleted && state.uri.path == '/onboarding') {
       return '/accounts';

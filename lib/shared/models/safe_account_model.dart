@@ -1,7 +1,6 @@
 import 'dart:typed_data';
 
 import 'package:equatable/equatable.dart';
-import 'package:hive_ce_flutter/adapters.dart';
 import 'package:safe_verify/shared/constants/network_constants.dart';
 import 'package:safe_verify/shared/constants/safe_hashes.dart';
 import 'package:safe_verify/shared/models/network_model.dart';
@@ -10,7 +9,7 @@ import 'package:version/version.dart';
 import 'package:wallet/wallet.dart';
 import 'package:web3dart/web3dart.dart';
 
-class SafeAccount extends HiveObject with EquatableMixin {
+class SafeAccount with EquatableMixin {
   final String id;
   String name;
   String address;
@@ -75,6 +74,28 @@ class SafeAccount extends HiveObject with EquatableMixin {
     } catch (e) {
       return null;
     }
+  }
+
+  /// Converts SafeAccount to JSON map for storage
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'address': address,
+      'chainId': chainId,
+      'version': version,
+    };
+  }
+
+  /// Creates SafeAccount from JSON map
+  factory SafeAccount.fromJson(Map<String, dynamic> json) {
+    return SafeAccount(
+      id: json['id'] as String,
+      name: json['name'] as String,
+      address: json['address'] as String,
+      chainId: json['chainId'] as int,
+      version: json['version'] as String,
+    );
   }
 
 }

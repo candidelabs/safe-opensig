@@ -76,7 +76,7 @@ class _AccountAdditionFormScreenState extends State<AccountAdditionFormScreen> {
         widget.existingAccount!.address = EthereumAddress.fromHex(_addressController.text).eip55With0x;
         widget.existingAccount!.chainId = _selectedNetwork.value!.chainId;
         widget.existingAccount!.version = _selectedVersion!;
-        widget.existingAccount!.save();
+        AccountsBox.addAccount(widget.existingAccount!);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Account updated successfully!')),
         );

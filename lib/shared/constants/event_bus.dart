@@ -11,3 +11,20 @@ class OnAddressNetworkDetected {
   final Network network;
   const OnAddressNetworkDetected(this.network);
 }
+
+enum MigrationStatus {
+  INITIALIZING,
+  BACKING_UP,
+  MIGRATING,
+  VERIFYING,
+  ROLLING_BACK,
+  COMPLETED,
+  FAILED,
+}
+
+class OnMigrationStatusChange {
+  final MigrationStatus status;
+  final String message;
+
+  const OnMigrationStatusChange(this.status, this.message);
+}
