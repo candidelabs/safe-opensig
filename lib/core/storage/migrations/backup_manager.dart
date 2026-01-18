@@ -65,7 +65,7 @@ class BackupManager {
       // Restore schema version
       final miscBox = await Hive.openBox(MiscBox.boxName);
       await miscBox.put(
-        'key:box:misc:storage:schema-version',
+        MiscBox.schemaVersionKey,
         backupData['schemaVersion'],
       );
     } catch (e) {

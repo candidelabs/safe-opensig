@@ -7,7 +7,7 @@ class MiscBox {
   static const String boxName = 'box:misc';
   static const String _onboardingCompletedKey = 'key:$boxName:onboarding:completed';
   static const String _selectedAccountIdKey = 'key:$boxName:safe-accounts:selected-account-id';
-  static const String _schemaVersionKey = 'key:$boxName:storage:schema-version';
+  static const String schemaVersionKey = 'key:$boxName:storage:schema-version';
 
   static Future<void> init() async {
     _box = await Hive.openBox(boxName);
@@ -40,10 +40,10 @@ class MiscBox {
   }
 
   static Future<void> setSchemaVersion(int version) async {
-    await _box.put(_schemaVersionKey, version);
+    await _box.put(schemaVersionKey, version);
   }
 
   static int getSchemaVersion() {
-    return _box.get(_schemaVersionKey, defaultValue: 0);
+    return _box.get(schemaVersionKey, defaultValue: 0);
   }
 }
