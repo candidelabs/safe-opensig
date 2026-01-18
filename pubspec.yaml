@@ -43,6 +43,8 @@ dependencies:
   version: 3.0.2
   flutter_dotenv: 6.0.0
   hex: 0.2.0
+  package_info_plus: 9.0.0
+  path_provider: 2.1.5
   # Rust Bridge
   revm_tracer:
     git: https://github.com/candidelabs/revm-tracer
