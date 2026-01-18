@@ -1,6 +1,5 @@
-# Ignore platforms other than iOS and Android
+# Ignore platforms other than iOS, Android, and Linux
 /windows
-/linux
 /web
 /macos
 
