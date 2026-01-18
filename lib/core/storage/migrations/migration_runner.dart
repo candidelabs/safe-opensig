@@ -16,6 +16,7 @@ class HiveMigrationRunner {
   /// v0: Implicit (pre-migration)
   /// v1: Initial migration system installed
   static const int CURRENT_VERSION = 1;
+  static bool? bNeedsMigration;
 
   /// Main entry point for migrations
   /// Call this from main.dart after Hive initialization
@@ -107,9 +108,13 @@ class HiveMigrationRunner {
   /// Checks if migration is needed
   /// Call this from main.dart to determine if MigrationApp should be launched
   static Future<bool> needsMigration() async {
+    if (bNeedsMigration != null){
+      return bNeedsMigration!;
+    }
     try {
       final currentVersion = await _getCurrentStorageVersion();
-      return _needsMigration(currentVersion, CURRENT_VERSION);
+      bNeedsMigration = _needsMigration(currentVersion, CURRENT_VERSION);
+      return bNeedsMigration!;
     } catch (e) {
       // If we can't determine version, assume no migration needed
       // This allows app to continue on error

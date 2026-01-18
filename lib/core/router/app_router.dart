@@ -104,10 +104,10 @@ final GoRouter router = GoRouter(
       ],
     ),
   ],
-  redirect: (context, state) async {
+  redirect: (context, state) {
     // Check migration first (highest priority)
-    final needsMigration = await HiveMigrationRunner.needsMigration();
-    if (needsMigration && state.uri.path != '/migration') {
+    final needsMigration = HiveMigrationRunner.bNeedsMigration;
+    if (needsMigration != null && needsMigration && state.uri.path != '/migration') {
       return '/migration';
     }
 

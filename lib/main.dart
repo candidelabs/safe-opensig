@@ -9,6 +9,7 @@ import 'package:hive_ce_flutter/hive_flutter.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:safe_verify/core/router/app_router.dart';
 import 'package:safe_verify/core/storage/accounts_box.dart';
+import 'package:safe_verify/core/storage/migrations/migration_runner.dart';
 import 'package:safe_verify/core/storage/misc_box.dart';
 import 'package:safe_verify/core/storage/theme_box.dart';
 import 'package:safe_verify/core/theme/app_theme.dart';
@@ -24,9 +25,12 @@ void main() async {
   await Hive.initFlutter();
 
   // Open Boxes - router will check if migration is needed
-  await MiscBox.init();
-  await ThemeBox.init();
-  await AccountsBox.init();
+  await Future.wait([
+    MiscBox.init(),
+    ThemeBox.init(),
+    AccountsBox.init()
+  ]);
+  await HiveMigrationRunner.needsMigration();
 
   // Initialize platform-specific features
   if (!kIsWeb && Platform.isWindows) {
