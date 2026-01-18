@@ -61,6 +61,7 @@ flutter:
   uses-material-design: true
   assets:
     - .env
+    - assets/
     - assets/networks/
     - assets/hardware_wallets/
   # https://flutter.dev/to/resolution-aware-images
