@@ -81,6 +81,8 @@ class HiveMigrationRunner {
         ));
       }
 
+      bNeedsMigration = false;
+
       return MigrationResult(
         success: result.success,
         startVersion: currentVersion,
