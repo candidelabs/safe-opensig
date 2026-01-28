@@ -618,7 +618,7 @@ class _NonceControlState extends State<_NonceControl> {
                   ),
                 ),
                 Container(
-                  width: 75,
+                  constraints: const BoxConstraints(minWidth: 75, maxWidth: 120),
                   height: 50,
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                   alignment: Alignment.center,
@@ -626,22 +626,25 @@ class _NonceControlState extends State<_NonceControl> {
                     color: Theme.of(context).colorScheme.secondaryContainer,
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Text.rich(
-                    TextSpan(
-                      text: '$_nonce',
-                      children: [
-                        if (widget.latestNonce == _nonce)
-                          TextSpan(
-                            text: "\nlatest",
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.5)
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text.rich(
+                      TextSpan(
+                        text: '$_nonce',
+                        children: [
+                          if (widget.latestNonce == _nonce)
+                            TextSpan(
+                              text: "\nlatest",
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.5)
+                              )
                             )
-                          )
-                      ]
+                        ]
+                      ),
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.titleLarge,
                     ),
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.titleLarge,
                   ),
                 ),
                 GestureDetector(
