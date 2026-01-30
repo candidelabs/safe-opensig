@@ -228,6 +228,10 @@ class SafeTransaction {
         callData,
         stateOverrides
       );
+      // Add missing excessBlobGas to block data for select networks for REVM compatibility.
+      if ({42161}.contains(account.network.chainId)){
+        block["excessBlobGas"] = "0x0";
+      }
       // Verifying state
       onPhaseChange?.call(SimulationPhase.verifyingState);
       // Create state verifier
