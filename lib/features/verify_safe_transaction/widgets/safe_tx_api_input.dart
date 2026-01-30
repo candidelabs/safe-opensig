@@ -41,10 +41,10 @@ class _SafeTxAPIInputState extends State<SafeTxAPIInput> {
       _selectedTransaction = null;
     });
 
-    final (success, transactions, error) =
-        await _service.getQueuedTransactions(
+    final (success, transactions, error) = await _service.getQueuedTransactions(
       safeAddress: widget.safeAccount.address,
       chainId: widget.safeAccount.network.chainId,
+      minNonce: (await widget.safeAccount.getNonce())?.toInt()
     );
 
     if (!mounted) return;

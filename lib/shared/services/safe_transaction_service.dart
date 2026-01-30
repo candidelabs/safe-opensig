@@ -25,14 +25,14 @@ class SafeTransactionService {
   };
 
   SafeTransactionService({Dio? dio})
-      : _dio = dio ??
-            Dio(BaseOptions(
-              connectTimeout: const Duration(seconds: 10),
-              receiveTimeout: const Duration(seconds: 10),
-              headers: {
-                'Accept': 'application/json',
-              },
-            ));
+    : _dio = dio ??
+      Dio(BaseOptions(
+        connectTimeout: const Duration(seconds: 10),
+        receiveTimeout: const Duration(seconds: 10),
+        headers: {
+          'Accept': 'application/json',
+        },
+      ));
 
   /// Get the Safe Transaction Service base URL for a given chain ID
   String _getBaseUrl(Network network) {
@@ -43,6 +43,7 @@ class SafeTransactionService {
   Future<(bool, List<SafeAPITransaction>?, String)> getQueuedTransactions({
     required String safeAddress,
     required int chainId,
+    int? minNonce,
   }) async {
     var network = availableNetworks[chainId];
     if (network == null || !supportedChainIds.contains(chainId)) {
@@ -61,6 +62,7 @@ class SafeTransactionService {
         endpoint,
         queryParameters: {
           'executed': 'false',
+          'nonce__gte': minNonce,
           'ordering': '-nonce', // Sort by nonce descending (newest first)
         },
       );
