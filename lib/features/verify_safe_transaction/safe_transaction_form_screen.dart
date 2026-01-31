@@ -182,11 +182,14 @@ class _SafeTransactionFormScreenState extends State<SafeTransactionFormScreen> {
                         ),
                       ),
                       const Spacer(),
-                      ElevatedButton(
-                        onPressed: safeTransaction != null ? _onSubmit : null,
-                        child: const Text('Submit'),
-                      ),
-                      const SizedBox(height: 16),
+                      // Only show Submit button for Manual Input tab
+                      if (currentIndex == 1) ...[
+                        ElevatedButton(
+                          onPressed: safeTransaction != null ? _onSubmit : null,
+                          child: const Text('Submit'),
+                        ),
+                        const SizedBox(height: 16),
+                      ],
                     ],
                   ),
                 ),
@@ -303,6 +306,7 @@ class _SafeTransactionFormScreenState extends State<SafeTransactionFormScreen> {
             safeAccount: widget.safeAccount,
             onValidInput: (safeTx){
               setState(() => safeTransaction = safeTx);
+              _onSubmit();
             },
           ),
           const SizedBox(height: 10),

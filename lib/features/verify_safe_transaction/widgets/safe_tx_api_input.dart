@@ -25,7 +25,6 @@ class _SafeTxAPIInputState extends State<SafeTxAPIInput> {
   LoadingState _state = LoadingState.idle;
   List<SafeAPITransaction>? _transactions;
   String? _errorMessage;
-  SafeAPITransaction? _selectedTransaction;
   final SafeTransactionService _service = SafeTransactionService();
 
   @override
@@ -38,7 +37,6 @@ class _SafeTxAPIInputState extends State<SafeTxAPIInput> {
     setState(() {
       _state = LoadingState.loading;
       _errorMessage = null;
-      _selectedTransaction = null;
     });
 
     final (success, transactions, error) = await _service.getQueuedTransactions(
@@ -62,10 +60,7 @@ class _SafeTxAPIInputState extends State<SafeTxAPIInput> {
     }
   }
 
-  void _onTransactionSelected(SafeAPITransaction transaction) async {
-    setState(() {
-      _selectedTransaction = transaction;
-    });
+  void _onTransactionSelected(SafeAPITransaction transaction) {
     final safeTx = transaction.toSafeTransaction();
     widget.onValidInput(safeTx);
   }
@@ -220,9 +215,8 @@ class _SafeTxAPIInputState extends State<SafeTxAPIInput> {
                 padding: const EdgeInsets.only(bottom: 12),
                 child: SafeAPITransactionCard(
                   transaction: transaction,
-                  isSelected: _selectedTransaction == transaction,
                   nativeCurrencySymbol: widget.safeAccount.network.nativeCurrencySymbol,
-                  onTap: () => _onTransactionSelected(transaction),
+                  onSelect: () => _onTransactionSelected(transaction),
                 ),
               ),
           ],

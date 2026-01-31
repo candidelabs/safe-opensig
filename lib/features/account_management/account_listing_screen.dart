@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:safe_opensig/core/storage/accounts_box.dart';
-import 'package:safe_opensig/core/storage/misc_box.dart';
 import 'package:safe_opensig/core/theme/theme_config.dart';
 import 'package:safe_opensig/shared/constants/event_bus.dart';
 import 'package:safe_opensig/shared/models/safe_account_model.dart';
@@ -18,13 +17,12 @@ class AccountListingScreen extends StatefulWidget {
 
 class _AccountListingScreenState extends State<AccountListingScreen> {
   late List<SafeAccount> _accounts;
-  late String? _selectedAccountId;
   late StreamSubscription _accountChangesSubscription;
 
   @override
   void initState() {
     _loadAccounts();
-    _accountChangesSubscription = eventBus.on<OnAccountStorageChange>().listen((event){
+    _accountChangesSubscription = eventBus.on<OnAccountStorageChange>().listen((event) {
       if (!mounted) return;
       _loadAccounts();
     });
@@ -40,179 +38,178 @@ class _AccountListingScreenState extends State<AccountListingScreen> {
   void _loadAccounts() {
     setState(() {
       _accounts = AccountsBox.getAccounts();
-      _selectedAccountId = MiscBox.getSelectedAccountId();
-    });
-  }
-
-  void _selectAccount(String accountId) {
-    MiscBox.setSelectedAccountId(accountId);
-    setState(() {
-      _selectedAccountId = accountId;
     });
   }
 
   @override
   Widget build(BuildContext context) {
     final accounts = _accounts;
-    final selectedAccountId = _selectedAccountId;
     return Scaffold(
       appBar: AppBar(
         title: const Text('Safe Accounts'),
         actions: [
-          accounts.isNotEmpty ? IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: () {
-              GoRouter.of(context).go('/accounts/add-account');
-            },
-          ) : const SizedBox.shrink(),
+          if (accounts.isNotEmpty)
+            IconButton(
+              icon: const Icon(Icons.add),
+              onPressed: () {
+                GoRouter.of(context).go('/accounts/add-account');
+              },
+            ),
         ],
       ),
-      body: accounts.isEmpty ? _EmptyStateWidget() : ListView.builder(
-        padding: const EdgeInsets.all(ThemeConfig.spacingMedium),
-        itemCount: accounts.length,
-        itemBuilder: (context, index) {
-          final account = accounts[index];
-          return _AccountCard(
-            account: account,
-            isActive: account.id == selectedAccountId,
-            onTap: () => _selectAccount(account.id),
-            onDelete: () {
-              AccountsBox.removeAccount(account.id);
-              if (selectedAccountId == account.id) {
-                MiscBox.setSelectedAccountId(null);
-              }
-              _loadAccounts();
-            },
-          );
-        },
-      ),
-      floatingActionButton: accounts.isNotEmpty ? FloatingActionButton.extended(
-        onPressed: () {
-          GoRouter.of(context).push("/verify-transaction", extra: AccountsBox.getAccount(selectedAccountId!)!);
-        },
-        label: const Text('Verify Safe Transaction'),
-        backgroundColor: Theme.of(context).colorScheme.primary,
-        foregroundColor: Theme.of(context).colorScheme.onPrimary,
-      ) : null,
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+      body: accounts.isEmpty
+          ? _EmptyStateWidget()
+          : Column(
+              children: [
+                Expanded(
+                  child: ListView.builder(
+                    padding: const EdgeInsets.all(ThemeConfig.spacingMedium),
+                    itemCount: accounts.length,
+                    itemBuilder: (context, index) {
+                      final account = accounts[index];
+                      return _AccountCard(
+                        account: account,
+                        onTap: () {
+                          GoRouter.of(context).push("/verify-transaction", extra: account);
+                        },
+                        onEdit: () {
+                          GoRouter.of(context).go('/accounts/edit-account', extra: account);
+                        },
+                        onDelete: () {
+                          AccountsBox.removeAccount(account.id);
+                          _loadAccounts();
+                        },
+                      );
+                    },
+                  ),
+                ),
+                // Hint text
+                Padding(
+                  padding: const EdgeInsets.only(bottom: ThemeConfig.spacingMedium),
+                  child: Text(
+                    'Swipe or hold cards for options',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context).textTheme.bodySmall?.color?.withValues(alpha: 0.5),
+                    ),
+                  ),
+                ),
+              ],
+            ),
     );
   }
 }
 
 class _AccountCard extends StatelessWidget {
   final SafeAccount account;
-  final bool isActive;
   final VoidCallback onTap;
+  final VoidCallback onEdit;
   final VoidCallback onDelete;
 
   const _AccountCard({
     required this.account,
-    required this.isActive,
     required this.onTap,
+    required this.onEdit,
     required this.onDelete,
   });
 
   @override
   Widget build(BuildContext context) {
-    var borderColor = isActive ? Theme.of(context).colorScheme.primary : Colors.white.withValues(alpha: 0.5);
-    return AnimatedContainer(
-      duration: Duration(milliseconds: 100),
-      margin: const EdgeInsets.only(bottom: ThemeConfig.spacingMedium),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: ThemeConfig.borderRadiusLarge,
-        boxShadow: ThemeConfig.shadowMedium,
-        border: Border(
-          left: BorderSide(
-            color: borderColor,
-            width: isActive ? 4.0 : 1,
+    return Padding(
+      padding: const EdgeInsets.only(bottom: ThemeConfig.spacingMedium),
+      child: Dismissible(
+        key: ValueKey(account.id),
+        confirmDismiss: (direction) async {
+          if (direction == DismissDirection.startToEnd) {
+            // Swipe RIGHT → Edit
+            onEdit();
+            return false; // Don't actually dismiss, just trigger edit
+          } else if (direction == DismissDirection.endToStart) {
+            // Swipe LEFT → Delete (with confirmation)
+            return await _showDeleteConfirmation(context);
+          }
+          return false;
+        },
+        onDismissed: (direction) {
+          if (direction == DismissDirection.endToStart) {
+            onDelete();
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Account deleted')),
+            );
+          }
+        },
+        background: Container(
+          // Swipe RIGHT background (Edit)
+          alignment: Alignment.centerLeft,
+          padding: const EdgeInsets.only(left: 20),
+          decoration: BoxDecoration(
+            color: ThemeConfig.primaryVariant,
+            borderRadius: BorderRadius.circular(12),
           ),
-          right: BorderSide(color: borderColor, width: 1),
-          top: BorderSide(color: borderColor, width: 1),
-          bottom: BorderSide(color: borderColor, width: 1)
+          child: const Icon(Icons.edit, color: Colors.white),
         ),
-      ),
-      child: Material(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: ThemeConfig.borderRadiusLarge,
-        elevation: isActive ? 10 : 3,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: ThemeConfig.borderRadiusLarge,
-          child: Padding(
-            padding: const EdgeInsets.all(ThemeConfig.spacingMedium),
-            child: Row(
-              children: [
-                NetworkLogo(network: account.network),
-                const SizedBox(width: ThemeConfig.spacingMedium),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        account.name,
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 18,
+        secondaryBackground: Container(
+          // Swipe LEFT background (Delete)
+          alignment: Alignment.centerRight,
+          padding: const EdgeInsets.only(right: 20),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.error,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: const Icon(Icons.delete, color: Colors.white),
+        ),
+        child: Card(
+          margin: EdgeInsets.zero,
+          elevation: 1,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+            side: BorderSide(
+              color: Theme.of(context).dividerColor,
+              width: 1,
+            ),
+          ),
+          child: InkWell(
+            onTap: onTap,
+            onLongPress: () => _showContextMenu(context),
+            borderRadius: BorderRadius.circular(12),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              child: Row(
+                children: [
+                  // Network logo
+                  NetworkLogo(network: account.network),
+                  const SizedBox(width: 14),
+
+                  // Account info
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Account name
+                        Text(
+                          account.name,
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: ThemeConfig.spacingXSmall),
-                      Text(
-                        _trimAddress(account.address),
-                        style: Theme.of(context).textTheme.bodyMedium,
-                      ),
-                    ],
-                  ),
-                ),
-                PopupMenuButton<String>(
-                  icon: Icon(
-                    Icons.more_vert,
-                    color: Theme.of(context).colorScheme.onSurface,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: ThemeConfig.borderRadiusLarge,
-                  ),
-                  onSelected: (String result) {
-                    if (result == 'edit') {
-                      _editAccount(context, account);
-                    } else if (result == 'delete') {
-                      _deleteAccount(context, account);
-                    }
-                  },
-                  menuPadding: EdgeInsets.zero,
-                  itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-                    PopupMenuItem<String>(
-                      value: 'edit',
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.edit,
-                            size: ThemeConfig.iconSizeMedium,
-                            color: Theme.of(context).colorScheme.onSurface,
-                          ),
-                          const SizedBox(width: ThemeConfig.spacingSmall),
-                          const Text('Edit'),
-                        ],
-                      ),
+                        const SizedBox(height: 4),
+                        // Address
+                        Text(
+                          _trimAddress(account.address),
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                      ],
                     ),
-                    PopupMenuItem<String>(
-                      value: 'delete',
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.delete,
-                            size: ThemeConfig.iconSizeMedium,
-                            color: Theme.of(context).colorScheme.error,
-                          ),
-                          const SizedBox(width: ThemeConfig.spacingSmall),
-                          const Text('Delete'),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+                  ),
+
+                  // Arrow indicator
+                  Icon(
+                    Icons.arrow_forward_ios,
+                    size: 16,
+                    color: Theme.of(context).primaryColor,
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -220,45 +217,74 @@ class _AccountCard extends StatelessWidget {
     );
   }
 
-  void _editAccount(BuildContext context, SafeAccount account) {
-    GoRouter.of(context).go('/accounts/edit-account', extra: account);
+  void _showContextMenu(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: Icon(Icons.edit, color: ThemeConfig.primaryVariant),
+                title: const Text('Edit'),
+                onTap: () {
+                  Navigator.pop(context);
+                  onEdit();
+                },
+              ),
+              ListTile(
+                leading: Icon(Icons.delete, color: Theme.of(context).colorScheme.error),
+                title: const Text('Delete'),
+                onTap: () async {
+                  Navigator.pop(context);
+                  final confirmed = await _showDeleteConfirmation(context);
+                  if (confirmed) {
+                    onDelete();
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Account deleted')),
+                      );
+                    }
+                  }
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
-  void _deleteAccount(BuildContext context, SafeAccount account) {
-    showDialog(
+  Future<bool> _showDeleteConfirmation(BuildContext context) async {
+    return await showDialog<bool>(
       context: context,
       builder: (BuildContext dialogContext) {
         return AlertDialog(
           title: const Text('Delete Account'),
-          content: Text('Are you sure you want to delete the account "${account.name}"?'),
+          content: Text('Are you sure you want to delete "${account.name}"?'),
           actions: [
             TextButton(
-              onPressed: () {
-                Navigator.of(dialogContext).pop();
-              },
+              onPressed: () => Navigator.of(dialogContext).pop(false),
               child: const Text('Cancel'),
             ),
             TextButton(
-              onPressed: () {
-                onDelete();
-                Navigator.of(dialogContext).pop();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Account deleted successfully!')),
-                );
-              },
+              onPressed: () => Navigator.of(dialogContext).pop(true),
               child: const Text('Delete'),
             ),
           ],
         );
       },
-    );
+    ) ?? false;
   }
 
   String _trimAddress(String address) {
     if (address.length <= 10) return address;
     return '${address.substring(0, 6)}...${address.substring(address.length - 4)}';
   }
-
 }
 
 class _EmptyStateWidget extends StatelessWidget {
