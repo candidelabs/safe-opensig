@@ -34,10 +34,8 @@ class _SafeLedgerVerifyScreenState extends State<SafeLedgerVerifyScreen> {
     return Scaffold(
       appBar: AppBar(
         leading: currentPageIndex == 0 ? null : IconButton(
-          icon: const Icon(Icons.close),
-          onPressed: () {
-            context.go('/accounts');
-          },
+          icon: const Icon(Icons.arrow_back_outlined),
+          onPressed: () => setState(() {previousPageIndex=1;currentPageIndex = 0;}),
         ),
         title: const Text('Hardware Verification')
       ),
@@ -45,10 +43,10 @@ class _SafeLedgerVerifyScreenState extends State<SafeLedgerVerifyScreen> {
         duration: const Duration(milliseconds: 500),
         reverse: currentPageIndex < previousPageIndex,
         transitionBuilder: (
-            child,
-            animation,
-            secondaryAnimation,
-            ) {
+          child,
+          animation,
+          secondaryAnimation,
+        ) {
           return SharedAxisTransition(
             animation: animation,
             secondaryAnimation: secondaryAnimation,

@@ -48,7 +48,7 @@ class _LedgerContentVerificationScreenState extends State<LedgerContentVerificat
                     right: 89.5,
                     left: 0,
                     child: Center(
-                      child: Container(
+                      child: SizedBox(
                         width: 132,
                         height: 64,
                         // color: Colors.white.withValues(alpha: 0.9),
@@ -81,68 +81,77 @@ class _LedgerContentVerificationScreenState extends State<LedgerContentVerificat
           ),
           Spacer(),
           if (currentLedgerPage <= widget.pages.length-1)
-            Align(
-              alignment: Alignment.centerRight,
-              child: Card(
-                margin: EdgeInsets.only(bottom: 16),
-                elevation: 8,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(50)
-                ),
-                child: Padding(
+            Row(
+              children: [
+                Padding(
                   padding: const EdgeInsets.all(8),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      ElevatedButton(
-                        onPressed: currentLedgerPage > 0 ? () => setState(() => currentLedgerPage--) : null,
-                        style: ButtonStyle(
-                          shape: WidgetStatePropertyAll(CircleBorder()),
-                          padding: WidgetStatePropertyAll(EdgeInsets.all(0)),
-                          minimumSize: WidgetStatePropertyAll(Size(48, 48)),
-                          visualDensity: VisualDensity.compact,
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        ),
-                        child: Icon(Icons.chevron_left_rounded, size: 32),
-                      ),
-                      SizedBox(width: 8,),
-                      Builder(
-                        builder: (context) {
-                          if (currentLedgerPage == widget.pages.length-1){
-                            return ElevatedButton(
-                              onPressed: (){
-                                GoRouter.of(context).go("/accounts");
-                              },
-                              style: ButtonStyle(
-                                shape: WidgetStatePropertyAll(RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(64)
-                                )),
-                                padding: WidgetStatePropertyAll(EdgeInsets.all(12)),
-                                minimumSize: WidgetStatePropertyAll(Size(0, 48)),
-                                visualDensity: VisualDensity.compact,
-                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                              ),
-                              child: Text("Finish"),
-                            );
-                          }
-                          return ElevatedButton(
-                            onPressed: () => setState(() => currentLedgerPage++),
-                            style: ButtonStyle(
-                              shape: WidgetStatePropertyAll(CircleBorder()),
-                              padding: WidgetStatePropertyAll(EdgeInsets.all(0)),
-                              minimumSize: WidgetStatePropertyAll(Size(48, 48)),
-                              visualDensity: VisualDensity.compact,
-                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                            ),
-                            child: Icon(Icons.chevron_right_rounded, size: 32),
-                          );
-                        }
-                      ),
-                    ],
+                  child: OutlinedButton(
+                    onPressed: () => context.go('/accounts'),
+                    child: Text("Skip"),
                   ),
                 ),
-              ),
+                Spacer(),
+                Card(
+                  margin: EdgeInsets.only(bottom: 16),
+                  elevation: 8,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(50)
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(8),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        ElevatedButton(
+                          onPressed: currentLedgerPage > 0 ? () => setState(() => currentLedgerPage--) : null,
+                          style: ButtonStyle(
+                            shape: WidgetStatePropertyAll(CircleBorder()),
+                            padding: WidgetStatePropertyAll(EdgeInsets.all(0)),
+                            minimumSize: WidgetStatePropertyAll(Size(48, 48)),
+                            visualDensity: VisualDensity.compact,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
+                          child: Icon(Icons.chevron_left_rounded, size: 32),
+                        ),
+                        SizedBox(width: 8,),
+                        Builder(
+                            builder: (context) {
+                              if (currentLedgerPage == widget.pages.length-1){
+                                return ElevatedButton(
+                                  onPressed: (){
+                                    GoRouter.of(context).go("/accounts");
+                                  },
+                                  style: ButtonStyle(
+                                    shape: WidgetStatePropertyAll(RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(64)
+                                    )),
+                                    padding: WidgetStatePropertyAll(EdgeInsets.all(12)),
+                                    minimumSize: WidgetStatePropertyAll(Size(0, 48)),
+                                    visualDensity: VisualDensity.compact,
+                                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                  ),
+                                  child: Text("Finish"),
+                                );
+                              }
+                              return ElevatedButton(
+                                onPressed: () => setState(() => currentLedgerPage++),
+                                style: ButtonStyle(
+                                  shape: WidgetStatePropertyAll(CircleBorder()),
+                                  padding: WidgetStatePropertyAll(EdgeInsets.all(0)),
+                                  minimumSize: WidgetStatePropertyAll(Size(48, 48)),
+                                  visualDensity: VisualDensity.compact,
+                                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                ),
+                                child: Icon(Icons.chevron_right_rounded, size: 32),
+                              );
+                            }
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             )
         ],
       ),
