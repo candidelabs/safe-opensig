@@ -1,6 +1,7 @@
 import 'package:animations/animations.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:safe_opensig/features/verify_safe_transaction/ledger_verification/ledger_content_verification_screen.dart';
 import 'package:safe_opensig/shared/models/hw_wallets/hw_content_generator.dart';
 import 'package:safe_opensig/shared/models/hw_wallets/ledger/ledger_nano_s_plus.dart';
@@ -20,7 +21,6 @@ class SafeLedgerVerifyScreen extends StatefulWidget {
 class _SafeLedgerVerifyScreenState extends State<SafeLedgerVerifyScreen> {
   int currentPageIndex = 0;
   int previousPageIndex = 0;
-  HardwareWallet selectedHardwareWallet = HardwareWallet.ledger_nano;
   late HWContentGenerator contentGenerator;
 
   @override
@@ -77,11 +77,6 @@ class _SafeLedgerVerifyScreenState extends State<SafeLedgerVerifyScreen> {
     return Padding(
       padding: EdgeInsets.all(16.0),
       child: _HardwareWalletSelectionPage(
-        onChange: (newValue){
-          setState(() {
-            selectedHardwareWallet = newValue;
-          });
-        },
         onProceed: (){
           setState(() {
             currentPageIndex = 1;
@@ -90,7 +85,6 @@ class _SafeLedgerVerifyScreenState extends State<SafeLedgerVerifyScreen> {
         onSkip: (){
           GoRouter.of(context).go("/accounts");
         },
-        value: selectedHardwareWallet,
       ),
     );
   }
@@ -98,11 +92,9 @@ class _SafeLedgerVerifyScreenState extends State<SafeLedgerVerifyScreen> {
 }
 
 class _HardwareWalletSelectionPage extends StatelessWidget {
-  final HardwareWallet value;
-  final Function(HardwareWallet) onChange;
   final VoidCallback onProceed;
   final VoidCallback onSkip;
-  const _HardwareWalletSelectionPage({super.key, required this.value, required this.onChange, required this.onProceed, required this.onSkip});
+  const _HardwareWalletSelectionPage({required this.onProceed, required this.onSkip});
 
   @override
   Widget build(BuildContext context) {
@@ -110,22 +102,102 @@ class _HardwareWalletSelectionPage extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.center,
       mainAxisSize: MainAxisSize.min,
       children: [
-        DropdownButtonFormField<HardwareWallet>(
-          value: value,
-          decoration: const InputDecoration(
-            labelText: 'Hardware Wallet',
-            border: OutlineInputBorder(),
+        Container(
+          padding: EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            border: Border.all(color: Theme.of(context).dividerColor),
+            borderRadius: BorderRadius.circular(12),
           ),
-          items: HardwareWallet.values.map((HardwareWallet hw) {
-            return DropdownMenuItem<HardwareWallet>(
-                value: hw,
-                child: Text(hw.name)
-            );
-          }).toList(),
-          onChanged: (HardwareWallet? newValue) {
-            if (newValue == null) return;
-            onChange.call(newValue);
-          },
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text("Ledger Nano (Classics)", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                    Text("S, S Plus, X", style: TextStyle(fontSize: 12, color: Theme.of(context).textTheme.bodySmall?.color)),
+                  ],
+                ),
+              ),
+              Icon(Icons.check_circle, color: Theme.of(context).colorScheme.primary),
+            ],
+          ),
+        ),
+        SizedBox(height: 8),
+        Align(
+          alignment: Alignment.centerRight,
+          child: TextButton(
+            onPressed: () {
+              launchUrl(Uri.parse('https://github.com/candidelabs/safe-opensig/issues/new?title=Hardware+wallet+support+request&labels=enhancement'));
+            },
+            style: TextButton.styleFrom(
+              padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              minimumSize: Size.zero,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text("Don't see your device? Request support", style: TextStyle(fontSize: 12)),
+                SizedBox(width: 4),
+                Icon(Icons.open_in_new, size: 12),
+              ],
+            ),
+          ),
+        ),
+        SizedBox(height: 16,),
+        Row(
+          children: [
+            Icon(Icons.info_outline),
+            SizedBox(width: 4,),
+            Text("Ledger Version Info", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),)
+          ],
+        ),
+        SizedBox(height: 4,),
+        Card(
+          elevation: 4,
+          child: Column(
+            children: [
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                child: Row(
+                  children: [
+                    Text("Firmware"),
+                    Spacer(),
+                    Text("v2.5.0", style: TextStyle(fontWeight: FontWeight.bold),),
+                    SizedBox(width: 8,),
+                    Container(
+                      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.green.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text("latest", style: TextStyle(fontSize: 11, color: Colors.green, fontWeight: FontWeight.bold),),
+                    )
+                  ],
+                ),
+              ),
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                child: Row(
+                  children: [
+                    Text("Ethereum App"),
+                    Spacer(),
+                    Text("v0.18.0", style: TextStyle(fontWeight: FontWeight.bold),),
+                    SizedBox(width: 8,),
+                    Container(
+                      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.green.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text("latest", style: TextStyle(fontSize: 11, color: Colors.green, fontWeight: FontWeight.bold),),
+                    )
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
         SizedBox(height: 16,),
         Row(
@@ -217,6 +289,45 @@ class _HardwareWalletSelectionPage extends StatelessWidget {
                 ),
               ),
             ],
+          ),
+        ),
+        SizedBox(height: 8,),
+        Align(
+          alignment: Alignment.centerRight,
+          child: TextButton.icon(
+            onPressed: () {
+              showModalBottomSheet(
+                context: context,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+                ),
+                builder: (context) => Padding(
+                  padding: EdgeInsets.all(20),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text("Why these settings?", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                      SizedBox(height: 12),
+                      Text(
+                        "These settings provide an optimal balance of security and UX when signing Safe transactions.\n\n"
+                        "• Transaction Hash Display and Debug Contract Data allow you to verify domain and message hashes.\n\n"
+                        "• Keeping EIP-712 Raw Messages disabled avoids review fatigue from overly verbose displays.",
+                        style: TextStyle(fontSize: 14, height: 1.5),
+                      ),
+                      SizedBox(height: 20),
+                    ],
+                  ),
+                ),
+              );
+            },
+            icon: Icon(Icons.help_outline, size: 16),
+            label: Text("Why these settings?", style: TextStyle(fontSize: 12)),
+            style: TextButton.styleFrom(
+              padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              minimumSize: Size.zero,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
           ),
         ),
         Spacer(),

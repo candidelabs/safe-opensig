@@ -50,6 +50,7 @@ dependencies:
     git:
       url: https://github.com/candidelabs/revm-tracer
       ref: e454043b8f1ff2251884fef9e1cf1510f1f438f1
+  url_launcher: 6.3.2
 
 dev_dependencies:
   flutter_test:
