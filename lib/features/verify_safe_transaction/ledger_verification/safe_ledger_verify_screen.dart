@@ -164,16 +164,7 @@ class _HardwareWalletSelectionPage extends StatelessWidget {
                   children: [
                     Text("Firmware"),
                     Spacer(),
-                    Text("v2.5.0", style: TextStyle(fontWeight: FontWeight.bold),),
-                    SizedBox(width: 8,),
-                    Container(
-                      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: Colors.green.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text("latest", style: TextStyle(fontSize: 11, color: Colors.green, fontWeight: FontWeight.bold),),
-                    )
+                    Text("v2.5.0+", style: TextStyle(fontWeight: FontWeight.bold),),
                   ],
                 ),
               ),
@@ -183,16 +174,7 @@ class _HardwareWalletSelectionPage extends StatelessWidget {
                   children: [
                     Text("Ethereum App"),
                     Spacer(),
-                    Text("v0.18.0", style: TextStyle(fontWeight: FontWeight.bold),),
-                    SizedBox(width: 8,),
-                    Container(
-                      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: Colors.green.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text("latest", style: TextStyle(fontSize: 11, color: Colors.green, fontWeight: FontWeight.bold),),
-                    )
+                    Text("v0.18.0+", style: TextStyle(fontWeight: FontWeight.bold),),
                   ],
                 ),
               ),
