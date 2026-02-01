@@ -127,15 +127,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          if (_currentPage != 0)
+          if (_currentPage < _onboardingPages.length - 1)
             TextButton(
-              onPressed: () {
-                _pageController.animateToPage(
-                  0,
-                  duration: const Duration(milliseconds: 300),
-                  curve: Curves.easeInOut,
-                );
-              },
+              onPressed: _completeOnboarding,
               child: const Text('Skip'),
             )
           else
