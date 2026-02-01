@@ -33,6 +33,18 @@ class SafeAPITransactionCard extends StatelessWidget {
 
   bool get _isDelegateCall => transaction.operation == 1;
 
+  String _formatDate(DateTime date) {
+    final local = date.toLocal();
+    final month = local.month;
+    final day = local.day;
+    final year = local.year;
+    final hour = local.hour > 12 ? local.hour - 12 : (local.hour == 0 ? 12 : local.hour);
+    final minute = local.minute.toString().padLeft(2, '0');
+    final second = local.second.toString().padLeft(2, '0');
+    final period = local.hour >= 12 ? 'PM' : 'AM';
+    return '$month/$day/$year, $hour:$minute:$second $period';
+  }
+
   @override
   Widget build(BuildContext context) {
     final isReady = transaction.isFullyConfirmed;
@@ -113,28 +125,39 @@ class SafeAPITransactionCard extends StatelessWidget {
                 ],
               ),
 
-              const SizedBox(height: 8),
+              const SizedBox(height: 10),
 
-              // Row 2: To address + Arrow
+              // To address (subtle)
+              Text(
+                'To: ${Utilities.truncateIfAddress(transaction.to)}',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.5),
+                ),
+              ),
+
+              const SizedBox(height: 12),
+
+              // Created date (prominent) + Arrow
               Row(
                 children: [
-                  Text(
-                    'To: ',
-                    style: TextStyle(
-                      color: Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
-                      fontSize: 14,
+                  if (transaction.submissionDate != null) ...[
+                    Icon(
+                      Icons.access_time,
+                      size: 16,
+                      color: Theme.of(context).primaryColor,
                     ),
-                  ),
-                  Expanded(
-                    child: Text(
-                      Utilities.truncateIfAddress(transaction.to),
+                    const SizedBox(width: 6),
+                    Text(
+                      _formatDate(transaction.submissionDate!),
                       style: TextStyle(
-                        fontFamily: 'monospace',
-                        fontSize: 14,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
                         color: Theme.of(context).textTheme.bodyMedium?.color,
                       ),
                     ),
-                  ),
+                  ],
+                  const Spacer(),
                   Icon(
                     Icons.arrow_forward_ios,
                     size: 16,
@@ -183,7 +206,7 @@ class SafeAPITransactionCard extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.hourglass_top, size: 14, color: Colors.orange.shade700),
+            Icon(Icons.people_outline, size: 14, color: Colors.orange.shade700),
             const SizedBox(width: 4),
             Text(
               '${transaction.confirmations}/${transaction.confirmationsRequired}',

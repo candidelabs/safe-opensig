@@ -184,7 +184,21 @@ class _SafeTxAPIInputState extends State<SafeTxAPIInput> {
     );
   }
 
+  /// Groups transactions by nonce for conflict detection
+  Map<BigInt, List<SafeAPITransaction>> _groupByNonce(List<SafeAPITransaction> transactions) {
+    final Map<BigInt, List<SafeAPITransaction>> grouped = {};
+    for (final tx in transactions) {
+      final nonce = tx.nonce ?? BigInt.zero;
+      grouped.putIfAbsent(nonce, () => []);
+      grouped[nonce]!.add(tx);
+    }
+    return grouped;
+  }
+
   Widget _buildSuccessState() {
+    final groupedByNonce = _groupByNonce(_transactions!);
+    final sortedNonces = groupedByNonce.keys.toList()..sort();
+
     return SingleChildScrollView(
       child: Padding(
         padding: const EdgeInsets.all(12),
@@ -210,17 +224,85 @@ class _SafeTxAPIInputState extends State<SafeTxAPIInput> {
               ],
             ),
             const SizedBox(height: 8),
-            for (var transaction in _transactions!)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: SafeAPITransactionCard(
-                  transaction: transaction,
-                  nativeCurrencySymbol: widget.safeAccount.network.nativeCurrencySymbol,
-                  onSelect: () => _onTransactionSelected(transaction),
-                ),
-              ),
+            for (final nonce in sortedNonces)
+              _buildNonceGroup(nonce, groupedByNonce[nonce]!),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildNonceGroup(BigInt nonce, List<SafeAPITransaction> transactions) {
+    final isConflicting = transactions.length > 1;
+
+    if (!isConflicting) {
+      // Single transaction - no grouping needed
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 12),
+        child: SafeAPITransactionCard(
+          transaction: transactions.first,
+          nativeCurrencySymbol: widget.safeAccount.network.nativeCurrencySymbol,
+          onSelect: () => _onTransactionSelected(transactions.first),
+        ),
+      );
+    }
+
+    // Multiple transactions with same nonce - show conflict group
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.orange.shade400, width: 1.5),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Conflict warning banner
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: Colors.orange.shade400.withValues(alpha: 0.15),
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(10),
+                topRight: Radius.circular(10),
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.warning_amber, size: 18, color: Colors.orange.shade600),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Conflicting transactions. Select the one you want executed',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.orange.shade600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Transaction cards
+          Padding(
+            padding: const EdgeInsets.all(8),
+            child: Column(
+              children: [
+                for (int i = 0; i < transactions.length; i++)
+                  Padding(
+                    padding: EdgeInsets.only(bottom: i < transactions.length - 1 ? 8 : 0),
+                    child: SafeAPITransactionCard(
+                      transaction: transactions[i],
+                      nativeCurrencySymbol: widget.safeAccount.network.nativeCurrencySymbol,
+                      onSelect: () => _onTransactionSelected(transactions[i]),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

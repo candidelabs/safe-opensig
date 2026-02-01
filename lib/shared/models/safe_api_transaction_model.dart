@@ -7,6 +7,7 @@ class SafeAPITransaction extends SafeTransaction {
   final String safeTxHash;
   final int confirmations;
   final int confirmationsRequired;
+  final DateTime? submissionDate;
 
   SafeAPITransaction({
     required this.safeTxHash,
@@ -22,6 +23,7 @@ class SafeAPITransaction extends SafeTransaction {
     required super.nonce,
     required this.confirmations,
     required this.confirmationsRequired,
+    this.submissionDate,
   });
 
   factory SafeAPITransaction.fromJson(Map<String, dynamic> json) {
@@ -41,6 +43,9 @@ class SafeAPITransaction extends SafeTransaction {
         nonce: _parseBigInt(json['nonce']),
         confirmations: (json['confirmations'] as List?)?.length ?? 0,
         confirmationsRequired: _parseInt(json['confirmationsRequired']),
+        submissionDate: json['submissionDate'] != null
+            ? DateTime.tryParse(json['submissionDate'] as String)
+            : null,
       );
     } catch (e) {
       throw FormatException('Failed to parse SafeApiTransaction: $e');
