@@ -7,6 +7,7 @@ class Network extends Equatable {
   final int chainId;
   final String nativeCurrencySymbol;
   final List<Web3Client> providers;
+  final List<(String, String)> explorers;
   final String? logoUri;
 
   const Network({
@@ -15,6 +16,7 @@ class Network extends Equatable {
     required this.chainId,
     required this.nativeCurrencySymbol,
     required this.providers,
+    required this.explorers,
     this.logoUri,
   });
 

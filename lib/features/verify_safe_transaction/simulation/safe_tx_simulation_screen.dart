@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:blockies/blockies.dart';
 import 'package:dotted_line/dotted_line.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -18,6 +17,7 @@ import 'package:safe_opensig/shared/models/simulation/token_transfer.dart';
 import 'package:safe_opensig/shared/models/simulation/warning_transaction.dart';
 import 'package:safe_opensig/shared/utils/utilities.dart';
 import 'package:safe_opensig/shared/widgets/trust_minimized_note.dart';
+import 'package:safe_opensig/shared/widgets/address_widget.dart';
 import 'package:wallet/wallet.dart';
 
 class SafeTxSimulationScreen extends StatefulWidget {
@@ -309,8 +309,11 @@ class _SafeTxSimulationScreenState extends State<SafeTxSimulationScreen> {
                 ),
               ),
               Spacer(),
-              Text(
-                Utilities.truncateIfAddress(isReceived ? transfer.sender.with0x : transfer.recipient.with0x, leadingDigits: 8, trailingDigits: 8),
+              AddressWidget(
+                address: isReceived ? transfer.sender.with0x : transfer.recipient.with0x,
+                chainId: widget.safeAccount.network.chainId,
+                truncateLength: 8,
+                showBlockies: false,
                 style: TextStyle(
                   fontSize: 12,
                   color: Colors.grey[600],
@@ -387,9 +390,14 @@ class _SafeTxSimulationScreenState extends State<SafeTxSimulationScreen> {
                 TextSpan(
                   text: "  You are giving ",
                 ),
-                TextSpan(
-                  text: Utilities.truncateIfAddress(allowance.spender.with0x, leadingDigits: 8, trailingDigits: 8),
-                  style: TextStyle(color: Colors.grey[400], fontWeight: FontWeight.w800),
+                WidgetSpan(
+                  child: AddressWidget(
+                    address: allowance.spender.with0x,
+                    chainId: widget.safeAccount.network.chainId,
+                    truncateLength: 8,
+                    showBlockies: false,
+                    style: TextStyle(fontSize: 12, color: Colors.grey[400], fontWeight: FontWeight.w800),
+                  ),
                 ),
                 TextSpan(
                   text: " permission to spend ",
@@ -472,9 +480,14 @@ class _SafeTxSimulationScreenState extends State<SafeTxSimulationScreen> {
                 TextSpan(
                   text: "  You are revoking all previous allowances given to ",
                 ),
-                TextSpan(
-                  text: Utilities.truncateIfAddress(allowance.spender.with0x, leadingDigits: 8, trailingDigits: 8),
-                  style: TextStyle(color: Colors.grey[400], fontWeight: FontWeight.w800),
+                WidgetSpan(
+                  child: AddressWidget(
+                    address: allowance.spender.with0x,
+                    chainId: widget.safeAccount.network.chainId,
+                    truncateLength: 8,
+                    showBlockies: false,
+                    style: TextStyle(fontSize: 12, color: Colors.grey[400], fontWeight: FontWeight.w800),
+                  ),
                 ),
                 TextSpan(
                   text: " of your account's ",
@@ -589,8 +602,11 @@ class _SafeTxSimulationScreenState extends State<SafeTxSimulationScreen> {
                 ),
               ),
               Spacer(),
-              Text(
-                Utilities.truncateIfAddress(isReceived ? nftTransfer.sender.with0x : nftTransfer.recipient.with0x, leadingDigits: 8, trailingDigits: 8),
+              AddressWidget(
+                address: isReceived ? nftTransfer.sender.with0x : nftTransfer.recipient.with0x,
+                chainId: widget.safeAccount.network.chainId,
+                truncateLength: 8,
+                showBlockies: false,
                 style: TextStyle(
                   fontSize: 12,
                   color: Colors.grey[600],
@@ -656,9 +672,14 @@ class _SafeTxSimulationScreenState extends State<SafeTxSimulationScreen> {
                       TextSpan(
                         text: "  You are giving ",
                       ),
-                      TextSpan(
-                        text: Utilities.truncateIfAddress(nftAllowance.spender.with0x, leadingDigits: 8, trailingDigits: 8),
-                        style: TextStyle(color: Colors.grey[400], fontWeight: FontWeight.w800),
+                      WidgetSpan(
+                        child: AddressWidget(
+                          address: nftAllowance.spender.with0x,
+                          chainId: widget.safeAccount.network.chainId,
+                          truncateLength: 8,
+                          showBlockies: false,
+                          style: TextStyle(fontSize: 12, color: Colors.grey[400], fontWeight: FontWeight.w800),
+                        ),
                       ),
                       TextSpan(
                         text: " permission to transfer NFT ",
@@ -785,6 +806,7 @@ class _SafeTxSimulationScreenState extends State<SafeTxSimulationScreen> {
   Widget _buildSafeSettingChangeItem(SafeSettingChange change, bool drawSeparatorLine) {
     String title = '';
     String description = '';
+    bool isDescriptionAddress = false;
     IconData icon = Icons.add;
 
     switch (change.type) {
@@ -792,12 +814,14 @@ class _SafeTxSimulationScreenState extends State<SafeTxSimulationScreen> {
         final owner = change.data[0] as EthereumAddress;
         title = 'Added new owner';
         description = owner.with0x;
+        isDescriptionAddress = true;
         icon = Icons.add;
         break;
       case SafeSettingChangeType.OWNER_REVOCATION:
         final owner = change.data[0] as EthereumAddress;
         title = 'Removed owner';
         description = owner.with0x;
+        isDescriptionAddress = true;
         icon = Icons.remove;
         break;
       case SafeSettingChangeType.THRESHOLD_CHANGE:
@@ -838,7 +862,16 @@ class _SafeTxSimulationScreenState extends State<SafeTxSimulationScreen> {
             ],
           ),
           SizedBox(height: 4),
-          Text(description),
+          if (isDescriptionAddress)
+            AddressWidget(
+              address: description,
+              chainId: widget.safeAccount.chainId,
+              showBlockies: true,
+              truncateLength: 50,
+              // style: TextStyle(fontSize: 12),
+            ),
+          if (!isDescriptionAddress)
+            Text(description),
           drawSeparatorLine ? Container(
             margin: EdgeInsets.only(top: 8),
             child: DottedLine(
@@ -943,9 +976,11 @@ class _SafeTxSimulationScreenState extends State<SafeTxSimulationScreen> {
                   WidgetSpan(
                     child: Container(
                       margin: EdgeInsets.symmetric(vertical: 3),
-                      child: _AddressWidget(
+                      child: AddressWidget(
                         address: address.with0x,
-                        truncateSize: 13,
+                        chainId: widget.safeAccount.network.chainId,
+                        truncateLength: 13,
+                        showBlockies: false,
                         style: TextStyle(fontWeight: FontWeight.bold),
                       ),
                     )
@@ -1034,10 +1069,11 @@ class _SafeTxSimulationScreenState extends State<SafeTxSimulationScreen> {
                     ),
                   ),
                   const SizedBox(height: 4,),
-                  _AddressWidget(
+                  AddressWidget(
                     address: dangerousData.$2.eip55With0x,
+                    chainId: widget.safeAccount.network.chainId,
                     showBlockies: false,
-                    truncateSize: 14,
+                    truncateLength: 14,
                     style: TextStyle(
                       color: Colors.red[800],
                       fontWeight: FontWeight.bold,
@@ -1271,46 +1307,3 @@ class _NFTMediaPlayerState extends State<_NFTMediaPlayer> {
   }
 }
 
-class _AddressWidget extends StatelessWidget {
-  final String address;
-  final bool showBlockies;
-  final double size;
-  final int truncateSize;
-  final TextStyle? style;
-  const _AddressWidget({
-    super.key,
-    required this.address,
-    this.showBlockies=true,
-    this.size=25,
-    this.truncateSize=8,
-    this.style
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        if (showBlockies)
-          SizedBox(
-            width: size,
-            height: size,
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(70),
-              child: Blockies(
-                seed: address,
-                color: Colors.teal,
-                spotColor: Colors.white,
-                bgColor: Colors.greenAccent,
-                size: 8,
-              ),
-            ),
-          ),
-        SizedBox(width: showBlockies ? 5 : 0),
-        Text(
-          Utilities.truncateIfAddress(address, leadingDigits: truncateSize, trailingDigits: truncateSize),
-          style: style,
-        )
-      ],
-    );
-  }
-}

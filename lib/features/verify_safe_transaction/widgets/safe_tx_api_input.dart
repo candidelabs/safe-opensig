@@ -242,6 +242,7 @@ class _SafeTxAPIInputState extends State<SafeTxAPIInput> {
         child: SafeAPITransactionCard(
           transaction: transactions.first,
           nativeCurrencySymbol: widget.safeAccount.network.nativeCurrencySymbol,
+          chainId: widget.safeAccount.network.chainId,
           onSelect: () => _onTransactionSelected(transactions.first),
         ),
       );
@@ -296,6 +297,7 @@ class _SafeTxAPIInputState extends State<SafeTxAPIInput> {
                     child: SafeAPITransactionCard(
                       transaction: transactions[i],
                       nativeCurrencySymbol: widget.safeAccount.network.nativeCurrencySymbol,
+                      chainId: widget.safeAccount.network.chainId,
                       onSelect: () => _onTransactionSelected(transactions[i]),
                     ),
                   ),

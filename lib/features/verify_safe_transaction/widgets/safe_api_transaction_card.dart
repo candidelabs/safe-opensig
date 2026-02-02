@@ -1,16 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:safe_opensig/shared/models/safe_api_transaction_model.dart';
 import 'package:safe_opensig/shared/utils/utilities.dart';
+import 'package:safe_opensig/shared/widgets/address_widget.dart';
 
 class SafeAPITransactionCard extends StatelessWidget {
   final SafeAPITransaction transaction;
   final String nativeCurrencySymbol;
+  final int chainId;
   final VoidCallback onSelect;
 
   const SafeAPITransactionCard({
     super.key,
     required this.transaction,
     required this.nativeCurrencySymbol,
+    required this.chainId,
     required this.onSelect,
   });
 
@@ -128,12 +131,26 @@ class SafeAPITransactionCard extends StatelessWidget {
               const SizedBox(height: 10),
 
               // To address (subtle)
-              Text(
-                'To: ${Utilities.truncateIfAddress(transaction.to)}',
-                style: TextStyle(
-                  fontSize: 13,
-                  color: Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.5),
-                ),
+              Row(
+                children: [
+                  Text(
+                    'To: ',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.5),
+                    ),
+                  ),
+                  AddressWidget(
+                    address: transaction.to,
+                    chainId: chainId,
+                    truncateLength: 6,
+                    showBlockies: false,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.5),
+                    ),
+                  ),
+                ],
               ),
 
               const SizedBox(height: 12),
