@@ -1,111 +1,139 @@
-# Safe OpenSig
+<p align="center">
+  <img src="assets/opensig-logo-watermark.png" alt="Safe OpenSig" width="700">
+</p>
 
-The Verifiable Truth for Safe Treasury Execution.
+<h3 align="center">The Final World for Multisig Signing</h3>
 
-## Table of Contents
-- [About](#about)
-- [Tech Stack](#tech-stack)
-  - [Flutter Version](#flutter-version)
-  - [State Management](#state-management)
-  - [Storage](#storage)
-  - [Navigation](#navigation)
-- [Folder Structure](#folder-structure)
-- [Getting Started](#getting-started)
-  - [Installation](#installation)
-- [Contributing](#contributing)
-  - [Code Style](#code-style)
-  - [Branching Strategy](#branching-strategy)
+<p align="center">
+  <a href="https://candide.dev/opensig">Website</a> ·
+  <a href="https://ethresear.ch/t/trust-minimized-transaction-simulation-using-state-proofs/23857">Research</a>
+</p>
 
-## About
+---
 
-Safe OpenSig is a mobile app designed for enterprise Safe signers. It eliminates the "Blind Signing" trap by reconstructing the truth of a transaction locally before it reaches a hardware signing device.
+## What is Safe OpenSig?
 
-By decoupling verification from the execution interface, Safe OpenSig provides a secure, isolated environment to audit transaction logic, simulate state changes, and verify cryptographic integrity.
+Safe OpenSig is a mobile app for Safe multisig signers. It eliminates blind signing by showing you exactly what a transaction will do before you sign it on your hardware wallet.
 
-### The Objective
+**The problem**: When signing Safe transactions, you're often trusting a web interface to show you the truth. But browser extensions, phishing sites, or compromised frontends can manipulate what you see.
 
-Most signing flows rely on centralized APIs and "black box" logic. Safe OpenSig replaces trust with absolute certainty.
+**The solution**: Safe OpenSig reconstructs the transaction locally on your device, simulates it, and shows you the real outcome: balance changes, permission changes, everything. Then you verify that what you're signing on your Ledger matches what you just verified.
 
-1. Mitigate Blind Signing: Eliminate the risk of browser-based phishing, UI-injection attacks, and malicious payloads.
-2. Data Sovereignty: Transaction intent remains on-device. The architecture is local-first with zero telemetry and no third-party tracking.
-3. Deterministic Results: Shift from interface reliance to state verification.
+## Features
 
-### Core Architecture
+- **Transaction Simulation**: See exactly what will happen before signing: token transfers, balance changes, and permission modifications
+- **Ledger Hardware Wallet Support**: Visual preview of what your Ledger Nano S/S+ will display, so you can verify character-by-character
+- **Multi-Chain Support**: Works with Ethereum, Polygon, Optimism, Base, Arbitrum, Gnosis, and 10+ other networks
+- **Local Simulation**: Transaction decoding and EVM execution happen entirely on your device, with state fetched from RPC nodes
+- **Trust-Minimized Verification**: State is verified using Merkle proofs from multiple independent nodes
 
-Safe OpenSig operates on a three-pillar verification model:
+## How It Works
 
-1. Local REVM Simulation: The app runs a private instance of Rust Ethereum Virtual Machin directly on the device to decode transaction logic and preview balance or permission changes.
-
-2. Cryptographic Integrity: Blockchain state is verified using Merkle Patricia Trie proofs (eth_getProof) fetched from independent nodes, ensuring the data is cryptographically sound.
-
-3. Hardware Emulation: The app provides a 1:1 digital mirror of Ledger Nano S, X, and Pro screens. This allows for the verification of physical prompts and hex-decoding character-for-character prior to device commitment.
-
-## Tech Stack
-
-### Flutter Version
-
-This project uses Flutter version `3.32.4` managed by FVM (Flutter Version Management). FVM ensures that all developers are using the same Flutter version, preventing compatibility issues.
-
-To install and use FVM please refer to their [docs](https://fvm.app/documentation/getting-started)
-
-### State Management
-
-We use [Riverpod](https://pub.dev/packages/flutter_riverpod) for state management
-Riverpod provides a robust and scalable way to manage state with compile-time safety and easy testing.
-
-### Storage
-
-[Hive](https://pub.dev/packages/hive_ce_flutter) is used for local storage
-Hive is a lightweight and fast key-value database written in Dart, perfect for storing user preferences and account data locally.
-
-### Navigation
-
-[GoRouter](https://pub.dev/packages/go_router) handles navigation:
-GoRouter provides a declarative approach to routing and navigation with deep linking support.
-
-## Folder Structure
-```
-lib/
-├── core/              
-│   ├── router/        # Application routing
-│   ├── storage/       # Storage related classes
-│   └── theme/         # App themes and styling
-├── features/          
-│   ├── account_management/
-│   └── onboarding/
-├── hive/              # Hive related models and adapters
-├── shared/            # Shared utilities and widgets
-└── main.dart          
-```
+1. **Import or paste** your Safe transaction data
+2. **Simulate** the transaction locally using an embedded EVM
+3. **Review** the decoded results: balance changes, approvals, and state modifications
+4. **Verify hashes** match between the simulation and your hardware wallet
+5. **Sign with confidence** knowing exactly what you're approving
 
 ## Getting Started
 
-### Installation
-1. Install dependencies:
-   ```bash
-   fvm flutter pub get
-   ```
+### Prerequisites
 
-2. Run the app:
-   ```bash
-   fvm flutter run
-   ```
+- [FVM](https://fvm.app/documentation/getting-started) (Flutter Version Management)
+- Flutter 3.32.4 (managed by FVM)
+
+### Installation
+
+```bash
+# Clone the repository
+git clone https://github.com/candidelabs/safe-opensig.git
+cd safe-opensig
+
+# Install dependencies
+fvm flutter pub get
+
+# Create .env file with RPC endpoints (see .env.example)
+
+# Run the app
+fvm flutter run
+```
+
+### Environment Setup
+
+Create a `.env` file with RPC node URLs for the networks you want to support. The app uses multiple nodes per network for trust-minimized state verification.
+
+## Architecture
+
+Safe OpenSig operates on a three-pillar verification model:
+
+| Pillar | Description |
+|--------|-------------|
+| **Local REVM Simulation** | Runs a Rust EVM directly on-device to decode transaction logic and preview state changes |
+| **Cryptographic Verification** | Validates blockchain state using Merkle Patricia Trie proofs (`eth_getProof`) from multiple independent nodes |
+| **Hardware Emulation** | Provides a 1:1 preview of Ledger screens for character-by-character verification before signing |
+
+For technical details on the trust-minimized verification approach, see our [research post on ethresear.ch](https://ethresear.ch/t/trust-minimized-transaction-simulation-using-state-proofs/23857).
+
+## Tech Stack
+
+- **Framework**: Flutter 3.32.4 (cross-platform mobile)
+- **State Management**: Riverpod
+- **Storage**: Hive (local-first, no cloud sync)
+- **EVM**: REVM via Rust FFI
+- **Navigation**: GoRouter
+
+## Project Structure
+
+```
+lib/
+├── core/                            # Core infrastructure
+│   ├── router/                      # Navigation and routing
+│   ├── storage/                     # Local persistence
+│   └── theme/                       # App theming
+├── features/                        # Feature modules
+│   ├── account_management/          # Safe account operations
+│   ├── onboarding/                  # First-run experience
+│   └── verify_safe_transaction/     # Transaction verification flow
+├── shared/                          # Shared utilities
+│   ├── models/                      # Domain models
+│   ├── widgets/                     # Reusable UI components
+│   └── services/                    # Business logic
+└── main.dart
+```
 
 ## Contributing
 
-We welcome contributions to the Safe OpenSig App! Please follow these guidelines when contributing.
+We welcome contributions! Please follow these guidelines:
 
-### Code Style
+### Development Workflow
 
-- Follow the official [Dart style guide](https://dart.dev/guides/language/effective-dart/style)
-- Use `dart format` to format your code before committing
-- Run `flutter analyze` to check for any analysis issues
+1. Fork the repository
+2. Create a feature branch from `develop`: `git checkout -b feature/your-feature`
+3. Make your changes
+4. Run `fvm dart format .` and `fvm flutter analyze`
+5. Submit a pull request to `develop`
 
 ### Branching Strategy
 
-- `main` - Production-ready code
-- `develop` - Development branch, all pull requests should be made to this branch
-- `feature/*` - Feature branches, branched from `develop`
-- `fix/*`
-- `refactor/*`
-- `hotfix/*` - Hotfix branches for critical production issues
+| Branch | Purpose |
+|--------|---------|
+| `main` | Production releases |
+| `develop` | Integration branch for PRs |
+| `feature/*` | New features |
+| `fix/*` | Bug fixes |
+| `hotfix/*` | Critical production fixes |
+
+## Security
+
+Safe OpenSig is designed with security as the primary concern:
+
+- **Minimal network requests**: Only connects to RPC nodes for state verification
+- **No external dependencies** for transaction decoding
+- **Open source** for full auditability
+
+If you discover a security vulnerability, please report it responsibly.
+
+## Links
+
+- [Website](https://candide.dev/opensig)
+- [Trust-Minimized Verification Research](https://ethresear.ch/t/trust-minimized-transaction-simulation-using-state-proofs/23857)
