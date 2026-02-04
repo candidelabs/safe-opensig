@@ -78,7 +78,8 @@ auth.json
 .tokens
 
 # Claude Code (Anthropic)
-.claude/
+.claude/*
+!.claude/skills/
 .claude-code/
 .claude_cache/
 .claude-cli/
