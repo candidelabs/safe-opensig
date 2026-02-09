@@ -9,6 +9,10 @@ import 'package:safe_opensig/features/onboarding/onboarding_screen.dart';
 import 'package:safe_opensig/features/verify_safe_transaction/hashes_verification/safe_hashes_verify_screen.dart';
 import 'package:safe_opensig/features/verify_safe_transaction/ledger_verification/safe_ledger_verify_screen.dart';
 import 'package:safe_opensig/features/verify_safe_transaction/safe_transaction_form_screen.dart';
+import 'package:safe_opensig/features/settings/network_config_screen.dart';
+import 'package:safe_opensig/features/settings/network_config_override_screen.dart';
+import 'package:safe_opensig/features/settings/networks_listing_configuration_screen.dart';
+import 'package:safe_opensig/features/settings/settings_screen.dart';
 import 'package:safe_opensig/features/verify_safe_transaction/simulation/safe_tx_simulation_screen.dart';
 import 'package:safe_opensig/features/verify_safe_transaction/simulation/simulation_loading_screen.dart';
 import 'package:safe_opensig/shared/models/safe_account_model.dart';
@@ -43,6 +47,34 @@ final GoRouter router = GoRouter(
           },
         ),
       ]
+    ),
+    GoRoute(
+      path: '/settings',
+      builder: (context, state) => const SettingsScreen(),
+      routes: [
+        GoRoute(
+          path: 'node-settings',
+          builder: (context, state) => const NetworksListingConfigScreen(),
+          routes: [
+            GoRoute(
+              path: 'configure',
+              builder: (context, state) {
+                final int chainId = state.extra as int;
+                return NetworkConfigScreen(chainId: chainId);
+              },
+              routes: [
+                GoRoute(
+                  path: 'override',
+                  builder: (context, state) {
+                    final int chainId = state.extra as int;
+                    return NetworkConfigOverrideScreen(chainId: chainId);
+                  },
+                ),
+              ],
+            ),
+          ],
+        ),
+      ],
     ),
     GoRoute(
       path: '/verify-transaction',

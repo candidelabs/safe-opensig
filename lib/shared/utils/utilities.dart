@@ -1,9 +1,11 @@
 import 'dart:math';
 
 import 'package:flutter/services.dart';
+import 'package:http/http.dart' as http;
 import 'package:safe_opensig/shared/utils/abi_utils.dart';
 import 'package:safe_opensig/shared/utils/extensions/string_extensions.dart';
 import 'package:wallet/wallet.dart';
+import 'package:web3dart/json_rpc.dart';
 import 'package:web3dart/web3dart.dart';
 
 class Utilities {
@@ -200,6 +202,80 @@ class Utilities {
   static String _addThousandsSeparators(String number) {
     final regex = RegExp(r'(\d)(?=(\d{3})+(?!\d))');
     return number.replaceAllMapped(regex, (match) => '${match[1]},');
+  }
+
+  static Future<bool> verifyChainId(String rpcUrl, int expectedChainId) async {
+    try {
+      final client = Web3Client(rpcUrl, http.Client());
+      try {
+        final result = await client
+            .makeRPCCall('eth_chainId', [])
+            .timeout(const Duration(seconds: 7));
+        final returnedChainId = int.parse(
+          (result as String).replaceFirst('0x', ''),
+          radix: 16,
+        );
+        return returnedChainId == expectedChainId;
+      } finally {
+        client.dispose();
+      }
+    } catch (_) {
+      return false;
+    }
+  }
+
+  static Future<bool> checkDebugTraceCallSupport(String rpcUrl) async {
+    try {
+      final client = Web3Client(rpcUrl, http.Client());
+      try {
+        final to = "0x573D022940D6f096A8A8EBe718480A35813EE0Fc".toLowerCase();
+        // This RPC call should show that 'to' had a prestate of 0x0000000000000000000000000000000000000000000000000000000000000055 at 0x54ed94d77995e8aae832f82f9581a53db2ba36d621e62e254afb7c4c9c2077ad
+        final _response = await client.makeRPCCall('debug_traceCall', [
+          {
+            "from": "0xD8BB296624f635696Bb7c49dF1a15AB83f320d73",
+            "to": to,
+            "data": "0x09b1483d54ed94d77995e8aae832f82f9581a53db2ba36d621e62e254afb7c4c9c2077ad"
+          },
+          'latest',
+          {
+            "tracer": "prestateTracer",
+            "stateOverrides": {
+              to: {
+                "code": "0x6080604052348015600e575f5ffd5b50600436106026575f3560e01c806309b1483d14602a575b5f5ffd5b60406004803603810190603c91906080565b6042565b005b80546001810182555050565b5f5ffd5b5f819050919050565b6062816052565b8114606b575f5ffd5b50565b5f81359050607a81605b565b92915050565b5f602082840312156092576091604e565b5b5f609d84828501606e565b9150509291505056fea2646970667358221220639c4206c71a8dfa346abcea7182b52a1f27169c71e0d3670483575f9bde013f64736f6c634300081f0033",
+                "stateDiff": {
+                  "0x54ed94d77995e8aae832f82f9581a53db2ba36d621e62e254afb7c4c9c2077ad": "0x0000000000000000000000000000000000000000000000000000000000000055"
+                }
+              }
+            }
+          }
+        ]).timeout(const Duration(seconds: 7));
+        var response = _response as Map<String, dynamic>;
+        if (!response.containsKey(to)) return false;
+        if (!response[to].containsKey("storage")) return false;
+        if (!response[to]["storage"].containsKey("0x54ed94d77995e8aae832f82f9581a53db2ba36d621e62e254afb7c4c9c2077ad")) return false;
+        var storageValue = response[to]["storage"]["0x54ed94d77995e8aae832f82f9581a53db2ba36d621e62e254afb7c4c9c2077ad"];
+        if (storageValue != "0x0000000000000000000000000000000000000000000000000000000000000055") return false;
+        return true;
+      } on RPCError catch (e) {
+        final message = e.message.toLowerCase();
+        const unsupportedPatterns = [
+          'not found',
+          'not available',
+          'not supported',
+          'does not exist',
+          'unsupported',
+          'method not allowed',
+        ];
+        for (final pattern in unsupportedPatterns) {
+          if (message.contains(pattern)) return false;
+        }
+        return true;
+      } finally {
+        client.dispose();
+      }
+    } catch (_) {
+      return false;
+    }
   }
 
 }

@@ -22,6 +22,10 @@ enum MigrationStatus {
   FAILED,
 }
 
+class OnNodeConfigChange {
+  const OnNodeConfigChange();
+}
+
 class OnMigrationStatusChange {
   final MigrationStatus status;
   final String message;

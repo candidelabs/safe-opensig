@@ -16,6 +16,7 @@ import 'package:safe_opensig/shared/models/simulation/token_allowance.dart';
 import 'package:safe_opensig/shared/models/simulation/token_transfer.dart';
 import 'package:safe_opensig/shared/models/simulation/warning_transaction.dart';
 import 'package:safe_opensig/shared/utils/utilities.dart';
+import 'package:safe_opensig/core/storage/network_config_box.dart';
 import 'package:safe_opensig/shared/widgets/trust_minimized_note.dart';
 import 'package:safe_opensig/shared/widgets/address_widget.dart';
 import 'package:wallet/wallet.dart';
@@ -137,8 +138,11 @@ class _SafeTxSimulationScreenState extends State<SafeTxSimulationScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            TrustMinimizedNote(),
-            const SizedBox(height: 16),
+            if (!NetworkConfigBox.hasCustomConfig(widget.safeAccount.chainId) ||
+                (NetworkConfigBox.getConfig(widget.safeAccount.chainId)?.secondaryNodeUrls.isNotEmpty ?? false)) ...[
+              TrustMinimizedNote(),
+              const SizedBox(height: 16),
+            ],
             if (widget.transaction.hasNonceMismatch) ...[
               Card(
                 color: Colors.orange.shade600.withAlpha((255*0.1).floor()),

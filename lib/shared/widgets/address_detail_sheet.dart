@@ -2,20 +2,25 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:blockies/blockies.dart';
 import 'package:safe_opensig/shared/constants/network_constants.dart';
+import 'package:safe_opensig/shared/models/network_model.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:safe_opensig/core/theme/theme_config.dart';
 
 class AddressDetailSheet extends StatelessWidget {
   final String address;
-  final int? chainId;
+  late final Network? network;
   final double blockiesSize;
 
-  const AddressDetailSheet({
-    Key? key,
+  AddressDetailSheet({
+    super.key,
     required this.address,
-    this.chainId,
+    int? chainId,
     this.blockiesSize = 64,
-  }) : super(key: key);
+  }){
+    if (chainId != null){
+      network = availableNetworks[chainId]!;
+    }
+  }
 
   void _handleCopy(BuildContext context) {
     try {
@@ -56,18 +61,16 @@ class AddressDetailSheet extends StatelessWidget {
     }
   }
 
-  String getBlockExplorerUrl(int chainId, String address) {
-    final network = availableNetworks[chainId]!;
-    final baseUrl = network.explorers[0].$2;
+  String? getBlockExplorerUrl(String address) {
+    if (network == null) return null;
+    if (network!.explorers.isEmpty) return null;
+    final baseUrl = network!.explorers[0].$2;
     return '$baseUrl/address/$address';
   }
 
   @override
   Widget build(BuildContext context) {
-    final explorerUrl = chainId != null
-        ? getBlockExplorerUrl(chainId!, address)
-        : null;
-
+    final explorerUrl = getBlockExplorerUrl(address);
     return SafeArea(
       child: Container(
         padding: EdgeInsets.all(ThemeConfig.spacingMedium),

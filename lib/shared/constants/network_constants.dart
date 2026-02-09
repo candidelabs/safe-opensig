@@ -1,10 +1,11 @@
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart';
+import 'package:safe_opensig/core/storage/network_config_box.dart';
 import 'package:web3dart/web3dart.dart';
 
 import '../models/network_model.dart';
 
-var availableNetworks = {
+final _defaultNetworks = {
   // L1s
   1: Network(
     name: 'Ethereum',
@@ -173,3 +174,39 @@ var availableNetworks = {
     logoUri: null,
   ),
 };
+
+Map<int, Network> _effectiveNetworks = {};
+
+Map<int, Network> get availableNetworks => _effectiveNetworks;
+
+void rebuildEffectiveNetworks() {
+  final customConfigs = NetworkConfigBox.getAllConfigs();
+  _effectiveNetworks = _defaultNetworks.map((chainId, defaultNetwork) {
+    final custom = customConfigs[chainId];
+    if (custom == null) return MapEntry(chainId, defaultNetwork);
+
+    final customProviders = [
+      Web3Client(custom.primaryNodeUrl, Client()),
+      ...custom.secondaryNodeUrls.map((url) => Web3Client(url, Client())),
+    ];
+
+    final customExplorers = custom.explorerUrl != null
+        ? [("Custom Explorer", custom.explorerUrl!)]
+        : defaultNetwork.explorers;
+
+    return MapEntry(
+      chainId,
+      Network(
+        name: defaultNetwork.name,
+        chainPrefix: defaultNetwork.chainPrefix,
+        chainId: defaultNetwork.chainId,
+        nativeCurrencySymbol: defaultNetwork.nativeCurrencySymbol,
+        providers: customProviders,
+        explorers: customExplorers,
+        logoUri: defaultNetwork.logoUri,
+      ),
+    );
+  });
+}
+
+Network getDefaultNetwork(int chainId) => _defaultNetworks[chainId]!;

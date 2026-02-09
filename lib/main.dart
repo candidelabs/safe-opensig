@@ -11,7 +11,10 @@ import 'package:safe_opensig/core/router/app_router.dart';
 import 'package:safe_opensig/core/storage/accounts_box.dart';
 import 'package:safe_opensig/core/storage/migrations/migration_runner.dart';
 import 'package:safe_opensig/core/storage/misc_box.dart';
+import 'package:safe_opensig/core/storage/network_config_box.dart';
 import 'package:safe_opensig/core/storage/theme_box.dart';
+import 'package:safe_opensig/shared/constants/event_bus.dart';
+import 'package:safe_opensig/shared/constants/network_constants.dart';
 import 'package:safe_opensig/core/theme/app_theme.dart';
 import 'package:window_manager/window_manager.dart';
 
@@ -28,9 +31,13 @@ void main() async {
   await Future.wait([
     MiscBox.init(),
     ThemeBox.init(),
-    AccountsBox.init()
+    AccountsBox.init(),
+    NetworkConfigBox.init(),
   ]);
   await HiveMigrationRunner.needsMigration();
+
+  rebuildEffectiveNetworks();
+  eventBus.on<OnNodeConfigChange>().listen((_) => rebuildEffectiveNetworks());
 
   // Initialize platform-specific features
   if (!kIsWeb && Platform.isWindows) {

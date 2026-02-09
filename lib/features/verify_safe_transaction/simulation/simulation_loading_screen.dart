@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:safe_opensig/shared/models/safe_account_model.dart';
 import 'package:safe_opensig/shared/models/safe_transaction_model.dart';
 import 'package:safe_opensig/shared/models/simulation/simulation_phase.dart';
+import 'package:safe_opensig/core/storage/network_config_box.dart';
 import 'package:safe_opensig/shared/widgets/trust_minimized_note.dart';
 
 // Toggle this to add a delay between phases for better visibility
@@ -268,12 +269,19 @@ class _SimulationLoadingScreenState extends State<SimulationLoadingScreen> {
                   ),
                 ),
                 const SizedBox(height: 32),
-                _PhaseChecklist(currentPhase: _currentPhase),
-                const SizedBox(height: 24),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 28.0),
-                  child: TrustMinimizedNote(),
+                _PhaseChecklist(
+                  currentPhase: _currentPhase,
+                  stateVerificationSkipped:
+                      NetworkConfigBox.hasCustomConfig(widget.safeAccount.chainId) &&
+                      (NetworkConfigBox.getConfig(widget.safeAccount.chainId)?.secondaryNodeUrls.isEmpty ?? true),
                 ),
+                const SizedBox(height: 24),
+                if (!NetworkConfigBox.hasCustomConfig(widget.safeAccount.chainId) ||
+                    (NetworkConfigBox.getConfig(widget.safeAccount.chainId)?.secondaryNodeUrls.isNotEmpty ?? false))
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 28.0),
+                    child: TrustMinimizedNote(),
+                  ),
                 const SizedBox(height: 32),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 28.0),
@@ -364,8 +372,9 @@ class _PhaseIcon extends StatelessWidget {
 
 class _PhaseChecklist extends StatelessWidget {
   final SimulationPhase currentPhase;
+  final bool stateVerificationSkipped;
 
-  const _PhaseChecklist({required this.currentPhase});
+  const _PhaseChecklist({required this.currentPhase, this.stateVerificationSkipped = false});
 
   bool _isPhaseCompleted(SimulationPhase phase) {
     return phase.index <= currentPhase.index;
@@ -394,6 +403,10 @@ class _PhaseChecklist extends StatelessWidget {
         final isCompleted = _isPhaseCompleted(phase);
         final isCurrent = _isCurrentPhase(phase);
         final isLast = index == phases.length - 1;
+        final isWarn = phase == SimulationPhase.verifyingState
+            && stateVerificationSkipped
+            && isCompleted
+            && !isCurrent;
 
         return Row(
           mainAxisSize: MainAxisSize.min,
@@ -401,18 +414,22 @@ class _PhaseChecklist extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
-                color: isCurrent
-                    ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.15)
-                    : (isCompleted
-                        ? Colors.green.withValues(alpha: 0.15)
-                        : Colors.grey.withValues(alpha: 0.1)),
+                color: isWarn
+                    ? Colors.amber.withValues(alpha: 0.15)
+                    : isCurrent
+                        ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.15)
+                        : (isCompleted
+                            ? Colors.green.withValues(alpha: 0.15)
+                            : Colors.grey.withValues(alpha: 0.1)),
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: isCurrent
-                      ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.4)
-                      : (isCompleted
-                          ? Colors.green.withValues(alpha: 0.4)
-                          : Colors.grey.withValues(alpha: 0.3)),
+                  color: isWarn
+                      ? Colors.amber.withValues(alpha: 0.4)
+                      : isCurrent
+                          ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.4)
+                          : (isCompleted
+                              ? Colors.green.withValues(alpha: 0.4)
+                              : Colors.grey.withValues(alpha: 0.3)),
                   width: 1,
                 ),
               ),
@@ -430,9 +447,13 @@ class _PhaseChecklist extends StatelessWidget {
                             ),
                           )
                         : Icon(
-                            isCompleted ? Icons.check_circle : Icons.circle_outlined,
+                            isWarn
+                                ? Icons.warning_amber_rounded
+                                : isCompleted ? Icons.check_circle : Icons.circle_outlined,
                             size: 14,
-                            color: isCompleted ? Colors.green : Colors.grey[600],
+                            color: isWarn
+                                ? Colors.amber
+                                : isCompleted ? Colors.green : Colors.grey[600],
                           ),
                   ),
                   const SizedBox(width: 6),
@@ -441,9 +462,11 @@ class _PhaseChecklist extends StatelessWidget {
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           fontSize: 11,
                           fontWeight: isCurrent ? FontWeight.bold : FontWeight.w500,
-                          color: isCurrent
-                              ? Theme.of(context).colorScheme.primary
-                              : (isCompleted ? Colors.grey[300] : Colors.grey[600]),
+                          color: isWarn
+                              ? Colors.amber[300]
+                              : isCurrent
+                                  ? Theme.of(context).colorScheme.primary
+                                  : (isCompleted ? Colors.grey[300] : Colors.grey[600]),
                         ),
                   ),
                 ],
@@ -455,7 +478,9 @@ class _PhaseChecklist extends StatelessWidget {
                 width: 16,
                 height: 1,
                 margin: const EdgeInsets.symmetric(horizontal: 4),
-                color: isCompleted ? Colors.green.withValues(alpha: 0.4) : Colors.grey.withValues(alpha: 0.3),
+                color: isWarn
+                    ? Colors.amber.withValues(alpha: 0.4)
+                    : isCompleted ? Colors.green.withValues(alpha: 0.4) : Colors.grey.withValues(alpha: 0.3),
               ),
           ],
         );

@@ -49,6 +49,12 @@ class _AccountListingScreenState extends State<AccountListingScreen> {
       appBar: AppBar(
         title: const Text('Safe Accounts'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.settings_outlined),
+            onPressed: () {
+              GoRouter.of(context).go('/settings');
+            },
+          ),
           if (accounts.isNotEmpty)
             IconButton(
               icon: const Icon(Icons.add),

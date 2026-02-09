@@ -12,9 +12,14 @@ import 'package:safe_opensig/features/verify_safe_transaction/widgets/safe_tx_ca
 import 'package:safe_opensig/features/verify_safe_transaction/widgets/safe_tx_calldata_input.dart';
 import 'package:safe_opensig/features/verify_safe_transaction/widgets/safe_tx_json_guide_sheet.dart';
 import 'package:safe_opensig/features/verify_safe_transaction/widgets/safe_tx_json_input.dart';
+import 'package:safe_opensig/core/storage/network_config_box.dart';
 import 'package:safe_opensig/shared/models/safe_account_model.dart';
 import 'package:safe_opensig/shared/models/safe_transaction_model.dart';
+import 'package:safe_opensig/shared/utils/utilities.dart';
 import 'package:version/version.dart';
+
+enum _SimulationDialogResult { goBack, skipToHashes, useDefault }
+enum _NoSecondaryNodesResult { goBack, continueAnyway, useDefault }
 
 class SafeTransactionFormScreen extends StatefulWidget {
   final SafeAccount safeAccount;
@@ -83,10 +88,220 @@ class _SafeTransactionFormScreenState extends State<SafeTransactionFormScreen> {
       return;
     }
 
+    if (NetworkConfigBox.hasCustomConfig(widget.safeAccount.chainId)) {
+      final config = NetworkConfigBox.getConfig(widget.safeAccount.chainId)!;
+      cancelLoad = BotToast.showLoading();
+      final supported = await Utilities.checkDebugTraceCallSupport(config.primaryNodeUrl);
+      cancelLoad();
+      if (!mounted) return;
+
+      if (!supported) {
+        final result = await _showSimulationUnavailableDialog();
+        if (!mounted) return;
+        switch (result) {
+          case _SimulationDialogResult.goBack:
+            return;
+          case _SimulationDialogResult.skipToHashes:
+            GoRouter.of(context).push(
+              "/verify-transaction/hashes",
+              extra: (widget.safeAccount, safeTransaction!),
+            );
+            return;
+          case _SimulationDialogResult.useDefault:
+            await NetworkConfigBox.removeConfig(widget.safeAccount.chainId);
+            break; // fall through to simulation navigation
+        }
+      } else if (config.secondaryNodeUrls.isEmpty) {
+        final result = await _showNoSecondaryNodesDialog();
+        if (!mounted) return;
+        switch (result) {
+          case _NoSecondaryNodesResult.goBack:
+            return;
+          case _NoSecondaryNodesResult.continueAnyway:
+            break; // fall through to simulation navigation
+          case _NoSecondaryNodesResult.useDefault:
+            await NetworkConfigBox.removeConfig(widget.safeAccount.chainId);
+            break; // fall through to simulation navigation
+        }
+      }
+    }
+
     GoRouter.of(context).push(
       "/verify-transaction/simulation-loading",
       extra: (widget.safeAccount, safeTransaction!),
     );
+  }
+
+  Future<_SimulationDialogResult> _showSimulationUnavailableDialog() async {
+    final theme = Theme.of(context);
+    return await showDialog<_SimulationDialogResult>(
+          context: context,
+          builder: (context) => AlertDialog(
+            insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+            contentPadding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+            titlePadding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+            iconPadding: const EdgeInsets.only(top: 16),
+            actionsPadding: EdgeInsets.zero,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            icon: const Icon(
+              Icons.warning_amber_rounded,
+              color: Colors.amber,
+              size: 36,
+            ),
+            title: Text(
+              'Simulation Not Available',
+              style: theme.textTheme.titleMedium,
+              textAlign: TextAlign.center,
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Your custom RPC node does not support '
+                  'debug_traceCall, which is required for '
+                  'transaction simulation.',
+                  style: theme.textTheme.bodySmall,
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 20),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: () => Navigator.of(context).pop(_SimulationDialogResult.useDefault),
+                    icon: const Icon(Icons.restart_alt_rounded, size: 18),
+                    label: const Text('Use Default Config & Simulate'),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      side: BorderSide(color: theme.colorScheme.primary),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: () => Navigator.of(context).pop(_SimulationDialogResult.skipToHashes),
+                    icon: const Icon(Icons.skip_next_rounded, size: 18),
+                    label: const Text('Skip to Hashes'),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      side: BorderSide(color: theme.colorScheme.onSurface.withValues(alpha: 0.3)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                SizedBox(
+                  width: double.infinity,
+                  child: TextButton(
+                    onPressed: () => Navigator.of(context).pop(_SimulationDialogResult.goBack),
+                    child: Text(
+                      'Go Back',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ) ??
+        _SimulationDialogResult.goBack;
+  }
+
+  Future<_NoSecondaryNodesResult> _showNoSecondaryNodesDialog() async {
+    final theme = Theme.of(context);
+    return await showDialog<_NoSecondaryNodesResult>(
+          context: context,
+          builder: (context) => AlertDialog(
+            insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+            contentPadding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+            titlePadding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+            iconPadding: const EdgeInsets.only(top: 16),
+            actionsPadding: EdgeInsets.zero,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            icon: const Icon(
+              Icons.info_outline_rounded,
+              color: Colors.amber,
+              size: 36,
+            ),
+            title: Text(
+              'No State Verification',
+              style: theme.textTheme.titleMedium,
+              textAlign: TextAlign.center,
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Your custom configuration has no secondary '
+                  'nodes. Without multiple independent nodes, '
+                  'state verification cannot cross-check data, '
+                  'reducing the trust assumptions of the '
+                  'simulation.',
+                  style: theme.textTheme.bodySmall,
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 20),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: () => Navigator.of(context).pop(_NoSecondaryNodesResult.useDefault),
+                    icon: const Icon(Icons.restart_alt_rounded, size: 18),
+                    label: const Text('Use Default Config & Validate'),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      side: BorderSide(color: theme.colorScheme.primary),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: () => Navigator.of(context).pop(_NoSecondaryNodesResult.continueAnyway),
+                    icon: const Icon(Icons.play_arrow_rounded, size: 18),
+                    label: const Text('Continue Anyway'),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      side: BorderSide(color: theme.colorScheme.onSurface.withValues(alpha: 0.3)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                SizedBox(
+                  width: double.infinity,
+                  child: TextButton(
+                    onPressed: () => Navigator.of(context).pop(_NoSecondaryNodesResult.goBack),
+                    child: Text(
+                      'Go Back',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ) ??
+        _NoSecondaryNodesResult.goBack;
   }
 
   @override

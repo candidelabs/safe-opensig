@@ -56,6 +56,29 @@ class NetworkLogo extends StatelessWidget {
   }
 
   Widget _buildNetworkLogoFromUri() {
+    if (network.logoUri == null || network.logoUri?.trim() == ""){
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(50.0),
+        child: Container(
+          width: size,
+          height: size,
+          decoration: BoxDecoration(
+            color: Colors.blue.withValues(alpha: 0.2),
+            shape: BoxShape.circle,
+          ),
+          child: Center(
+            child: Text(
+              network.name.substring(0, 1).toUpperCase(),
+              style: TextStyle(
+                fontSize: size * 0.6,
+                fontWeight: FontWeight.bold,
+                color: Colors.blue,
+              ),
+            ),
+          ),
+        ),
+      );
+    }
     return ClipRRect(
       borderRadius: BorderRadius.circular(50.0),
       child: Image.network(
