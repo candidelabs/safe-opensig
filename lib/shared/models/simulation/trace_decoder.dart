@@ -308,6 +308,20 @@ class TraceDecoder {
   }
 
   SimulationResult decode(String account, SafeTransaction transaction, Network network, Map<String, dynamic> trace){
+    // Handle REVM-level errors (e.g. gas limit exceeded, validation failures)
+    if (trace["error"] == true) {
+      return SimulationResult(
+        success: false,
+        revertReason: trace["message"] as String? ?? "REVM execution error",
+        dangerous: (false, null, ""),
+        transfers: [],
+        allowances: [],
+        nftTransfers: [],
+        nftAllowances: [],
+        safeSettingsChanges: [],
+        warningTransactions: [],
+      );
+    }
     var executionResult = trace["executionResult"] as Map<String, dynamic>;
     if (!executionResult.containsKey("Success")) {
       String revertReason = executionResult["Revert"]["output"];

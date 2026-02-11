@@ -51,6 +51,7 @@ class EVMTracer {
     }
     var block = prestate.$1;
     var baseFeePerGas = Utilities.decodeBigInt(block["baseFeePerGas"])!.scale(1.25);
+    var blockGasLimit = Utilities.decodeBigInt(block["gasLimit"])!;
     var blockRaw = jsonEncode(prestate.$1);
     var traceRaw = jsonEncode(prestate.$2);
     var chainId = await provider.getChainId();
@@ -60,7 +61,7 @@ class EVMTracer {
       fromNonce: BigInt.from(0),
       to: to,
       data: data,
-      gasLimit: BigInt.from(30_000_000),
+      gasLimit: blockGasLimit,
       gasPrice: baseFeePerGas,
       gasPriorityFee: baseFeePerGas,
       latestBlockEnv: blockRaw,
