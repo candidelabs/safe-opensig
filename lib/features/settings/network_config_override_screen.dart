@@ -28,6 +28,7 @@ class _NetworkConfigOverrideScreenState
   late TextEditingController _primaryUrlController;
   late TextEditingController _explorerUrlController;
   final List<TextEditingController> _secondaryUrlControllers = [];
+  late bool _hasCustomConfig;
 
   // Chain ID verification state: url -> null (not checked), true (ok), false (failed)
   final Map<String, bool?> _chainIdResults = {};
@@ -37,6 +38,7 @@ class _NetworkConfigOverrideScreenState
   void initState() {
     super.initState();
     _network = getDefaultNetwork(widget.chainId);
+    _hasCustomConfig = NetworkConfigBox.hasCustomConfig(widget.chainId);
 
     final existing = NetworkConfigBox.getConfig(widget.chainId);
 
@@ -268,6 +270,54 @@ class _NetworkConfigOverrideScreenState
             discardedCount > 0
                 ? 'Configuration saved ($discardedCount node(s) discarded due to chain ID mismatch)'
                 : 'Configuration saved',
+          ),
+        ),
+      );
+      context.pop();
+    }
+  }
+
+  Future<void> _revertToRecommended() async {
+    final theme = Theme.of(context);
+    final confirmed = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            icon: const Icon(
+              Icons.restore,
+              color: Colors.blue,
+              size: 40,
+            ),
+            title: const Text('Revert to Recommended?'),
+            content: Text(
+              'This will remove your custom configuration for '
+              '${_network.name} and restore the recommended defaults.',
+              style: theme.textTheme.bodyMedium,
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: const Text('Revert'),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+
+    if (!confirmed || !mounted) return;
+
+    await NetworkConfigBox.removeConfig(widget.chainId);
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            '${_network.name} reverted to recommended configuration',
           ),
         ),
       );
@@ -685,11 +735,19 @@ class _NetworkConfigOverrideScreenState
                     : const Text('Save Network Configuration'),
               ),
             ),
+            if (_hasCustomConfig) ...[
+              const SizedBox(height: 4),
+              TextButton.icon(
+                onPressed: _isChecking ? null : _revertToRecommended,
+                icon: const Icon(Icons.restore, size: 16),
+                label: const Text('Revert to Recommended'),
+              ),
+            ],
             const SizedBox(height: 4),
             TextButton(
               onPressed: () => context.pop(),
               child: Text(
-                'Cancel Changes',
+                'Cancel',
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.5),
                 ),
