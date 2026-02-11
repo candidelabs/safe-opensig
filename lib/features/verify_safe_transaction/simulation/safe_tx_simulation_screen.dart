@@ -19,6 +19,7 @@ import 'package:safe_opensig/shared/utils/utilities.dart';
 import 'package:safe_opensig/core/storage/network_config_box.dart';
 import 'package:safe_opensig/shared/widgets/trust_minimized_note.dart';
 import 'package:safe_opensig/shared/widgets/address_widget.dart';
+import 'package:safe_opensig/shared/widgets/hold_to_confirm_button.dart';
 import 'package:wallet/wallet.dart';
 
 class SafeTxSimulationScreen extends StatefulWidget {
@@ -105,14 +106,15 @@ class _SafeTxSimulationScreenState extends State<SafeTxSimulationScreen> {
                 ),
               ),
               const SizedBox(height: 24),
-              ElevatedButton(
-                onPressed: () {
+              HoldToConfirmButton(
+                label: 'Proceed Anyway',
+                duration: const Duration(seconds: 3),
+                onConfirmed: () {
                   GoRouter.of(context).push(
                     "/verify-transaction/hashes",
-                    extra: (widget.safeAccount, widget.transaction)
+                    extra: (widget.safeAccount, widget.transaction),
                   );
                 },
-                child: const Text('Verify Hashes anyway'),
               ),
               SizedBox(height: 8),
               OutlinedButton(
@@ -198,26 +200,23 @@ class _SafeTxSimulationScreenState extends State<SafeTxSimulationScreen> {
             const SizedBox(height: 16),
             _buildWarningsCard(context),
             const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                OutlinedButton(
-                  onPressed: () {
-                    GoRouter.of(context).go("/accounts",);
-                  },
-                  child: const Text('Abort'),
-                ),
-                SizedBox(width: 4),
-                ElevatedButton(
-                  onPressed: () {
-                    GoRouter.of(context).push(
-                      "/verify-transaction/hashes",
-                      extra: (widget.safeAccount, widget.transaction)
-                    );
-                  },
-                  child: const Text('Verify Hashes'),
-                ),
-              ],
+            HoldToConfirmButton(
+              label: 'Confirm',
+              onConfirmed: () {
+                GoRouter.of(context).push(
+                  "/verify-transaction/hashes",
+                  extra: (widget.safeAccount, widget.transaction),
+                );
+              },
+            ),
+            const SizedBox(height: 8),
+            Center(
+              child: TextButton(
+                onPressed: () {
+                  GoRouter.of(context).go("/accounts",);
+                },
+                child: const Text('Abort'),
+              ),
             ),
           ],
         ),
