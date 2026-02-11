@@ -24,6 +24,7 @@ class _NetworkConfigOverrideScreenState
   final _formKey = GlobalKey<FormState>();
   late Network _network;
   bool _isChecking = false;
+  bool _showDuplicateWarnTrailingIcon = false;
 
   late TextEditingController _primaryUrlController;
   late TextEditingController _explorerUrlController;
@@ -49,10 +50,13 @@ class _NetworkConfigOverrideScreenState
       text: existing?.explorerUrl ?? '',
     );
 
-    if (existing != null) {
+    if (existing != null && existing.secondaryNodeUrls.isNotEmpty) {
       for (final url in existing.secondaryNodeUrls) {
         _secondaryUrlControllers.add(TextEditingController(text: url));
       }
+    } else {
+      // Always start with at least one secondary node field
+      _secondaryUrlControllers.add(TextEditingController());
     }
   }
 
@@ -252,6 +256,24 @@ class _NetworkConfigOverrideScreenState
       if (!proceed) return;
     }
 
+    // Require at least 1 unique secondary node after deduplication
+    if (deduplicatedSecondary.isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'At least 1 secondary node is required for state verification. '
+              'Add a node that differs from the primary.',
+            ),
+          ),
+        );
+      }
+      setState(() {
+        _showDuplicateWarnTrailingIcon = true;
+      });
+      return;
+    }
+
     final config = CustomNetworkConfig(
       chainId: widget.chainId,
       primaryNodeUrl: primaryUrl,
@@ -400,7 +422,7 @@ class _NetworkConfigOverrideScreenState
                     const SizedBox(height: ThemeConfig.spacingLarge),
                     _buildSectionLabel(
                       theme,
-                      'Secondary nodes',
+                      'Secondary nodes (min. 1 required)',
                       infoText:
                           'Secondary nodes are used to independently verify, '
                           'through Merkle tree proofs, that the state fetched '
@@ -569,7 +591,7 @@ class _NetworkConfigOverrideScreenState
               minWidth: 32,
               minHeight: 0,
             ),
-            suffixIcon: _buildChainIdStatusIcon(chainResult),
+            suffixIcon: _buildChainIdStatusIcon(chainResult, false),
           ),
           keyboardType: TextInputType.url,
           validator: (value) => value?.validateHttpsUrl(),
@@ -603,9 +625,17 @@ class _NetworkConfigOverrideScreenState
         _chainIdResults.clear();
       });
     }
+    if (_showDuplicateWarnTrailingIcon){
+      setState(() {
+        _showDuplicateWarnTrailingIcon = false;
+      });
+    }
   }
 
-  Widget? _buildChainIdStatusIcon(bool? result) {
+  Widget? _buildChainIdStatusIcon(bool? result, bool isSecondary) {
+    if (isSecondary && _showDuplicateWarnTrailingIcon){
+      return const Icon(Icons.warning_amber_rounded, color: Colors.amber, size: 20);
+    }
     if (result == null) return null;
     if (result) {
       return const Icon(Icons.check_circle, color: Colors.green, size: 20);
@@ -650,7 +680,7 @@ class _NetworkConfigOverrideScreenState
                             minWidth: 32,
                             minHeight: 0,
                           ),
-                          suffixIcon: _buildChainIdStatusIcon(chainResult),
+                          suffixIcon: _buildChainIdStatusIcon(chainResult, true),
                         ),
                         keyboardType: TextInputType.url,
                         validator: (value) =>
@@ -661,10 +691,14 @@ class _NetworkConfigOverrideScreenState
                     IconButton(
                       icon: Icon(
                         Icons.delete_outline,
-                        color: theme.colorScheme.error,
+                        color: _secondaryUrlControllers.length > 1
+                            ? theme.colorScheme.error
+                            : theme.disabledColor,
                         size: 20,
                       ),
-                      onPressed: () => _removeSecondaryUrl(index),
+                      onPressed: _secondaryUrlControllers.length > 1
+                          ? () => _removeSecondaryUrl(index)
+                          : null,
                       visualDensity: VisualDensity.compact,
                     ),
                   ],
