@@ -38,12 +38,24 @@ class NFTMetadata {
       tokenUri = metadata.$3;
     }else{
       try {
-        // Encode tokenId parameter for tokenURI(uint256)
+        // Encode tokenId parameter for tokenURI/uri calls
         var tokenIdEncoded = bytesToHex(encodeAbi(["uint256"], [tokenId]), include0x: false);
+        // Try ERC-721 tokenURI(uint256) first, fall back to ERC-1155 uri(uint256)
+        var tokenUriFuture = network.provider.callRaw(
+          contract: address,
+          data: hexToBytes("0xc87b56dd$tokenIdEncoded"), // ERC-721 tokenURI
+        ).catchError((_) =>
+          network.provider.callRaw(
+            contract: address,
+            data: hexToBytes("0x0e89341c$tokenIdEncoded"), // ERC-1155 uri
+          )
+        ).catchError((_) => bytesToHex(encodeAbi(["string"], ["Unknown"])));
         var results = await Future.wait([
-          network.provider.callRaw(contract: address, data: hexToBytes("0x06fdde03")),
-          network.provider.callRaw(contract: address, data: hexToBytes("0x95d89b41")),
-          network.provider.callRaw(contract: address, data: hexToBytes("0xc87b56dd$tokenIdEncoded")).catchError((_) => bytesToHex(encodeAbi(["string"], ["Unknown"]))),
+          network.provider.callRaw(contract: address, data: hexToBytes("0x06fdde03"))
+              .catchError((_) => bytesToHex(encodeAbi(["string"], ["Unknown"]))),
+          network.provider.callRaw(contract: address, data: hexToBytes("0x95d89b41"))
+              .catchError((_) => bytesToHex(encodeAbi(["string"], ["???"]))),
+          tokenUriFuture,
         ]);
         var nameHex = results[0];
         var symbolHex = results[1];
@@ -52,8 +64,11 @@ class NFTMetadata {
         symbol = decodeAbi(["string"], hexToBytes(symbolHex))[0];
         try {
           tokenUri = decodeAbi(["string"], hexToBytes(tokenUriHex))[0];
+          // ERC-1155 uri may contain {id} placeholder per spec
+          if (tokenUri != null && tokenUri!.contains('{id}')) {
+            tokenUri = tokenUri!.replaceAll('{id}', tokenId.toRadixString(16).padLeft(64, '0'));
+          }
         } catch (e) {
-          // tokenURI might not be supported or token might not exist
           tokenUri = null;
         }
         _metadataCache[cacheIdentifier] = (collectionName, symbol, tokenUri);

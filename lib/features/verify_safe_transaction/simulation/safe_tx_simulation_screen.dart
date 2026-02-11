@@ -552,20 +552,50 @@ class _SafeTxSimulationScreenState extends State<SafeTxSimulationScreen> {
   }
 
   Widget _buildNFTTransferItem(NFTTransfer nftTransfer, bool drawSeparatorLine) {
-    var isReceived = false;
-    if (nftTransfer.recipient.with0x.toLowerCase() == widget.safeAccount.address.toLowerCase()){
-      isReceived = true;
-    }
+    final account = widget.safeAccount.address.toLowerCase();
+    final isReceived = nftTransfer.recipient.with0x.toLowerCase() == account;
+    final isMint = nftTransfer.sender.with0x.toLowerCase() == '0x0000000000000000000000000000000000000000';
+    final isBurn = nftTransfer.recipient.with0x.toLowerCase() == '0x0000000000000000000000000000000000000000';
     final metadata = nftTransfer.metadata!;
+    final amountColor = isBurn ? Colors.red : isReceived || isMint ? Colors.green : Colors.red;
+    final amountPrefix = isBurn ? "-" : isReceived || isMint ? "+" : "-";
+
+    // Format amount for ERC-1155
+    String? formattedAmount;
+    if (nftTransfer.amount != null) {
+      formattedAmount = nftTransfer.decimals != null
+          ? Utilities.formatCryptoAmount(nftTransfer.amount!, nftTransfer.decimals!, symbol: metadata.symbol)
+          : '${nftTransfer.amount} ${metadata.symbol}';
+    }
+
+    // Determine the counterparty label and address
+    String counterpartyLabel;
+    String counterpartyAddress;
+    if (isMint) {
+      counterpartyLabel = 'Minted to your account';
+      counterpartyAddress = nftTransfer.recipient.with0x;
+    } else if (isBurn) {
+      counterpartyLabel = 'Burned from your account';
+      counterpartyAddress = nftTransfer.sender.with0x;
+    } else if (isReceived) {
+      counterpartyLabel = 'From';
+      counterpartyAddress = nftTransfer.sender.with0x;
+    } else {
+      counterpartyLabel = 'To';
+      counterpartyAddress = nftTransfer.recipient.with0x;
+    }
+
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Row 1: Image + Collection name + direction icon
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               _buildNFTImage(metadata.imageURI, size: 40),
-              SizedBox(width: 8,),
+              SizedBox(width: 8),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -578,9 +608,9 @@ class _SafeTxSimulationScreenState extends State<SafeTxSimulationScreen> {
                       overflow: TextOverflow.ellipsis,
                     ),
                     Text(
-                      'Token ID: ${nftTransfer.tokenId}',
+                      'ID: ${Utilities.truncate(nftTransfer.tokenId.toString(), leadingDigits: 8, trailingDigits: 4)}',
                       style: TextStyle(
-                        fontSize: 12,
+                        fontSize: 11,
                         color: Colors.grey[600],
                       ),
                       overflow: TextOverflow.ellipsis,
@@ -589,35 +619,82 @@ class _SafeTxSimulationScreenState extends State<SafeTxSimulationScreen> {
                 ),
               ),
               Icon(
-                isReceived ? Icons.arrow_downward : Icons.arrow_upward,
-                color: isReceived ? Colors.green : Colors.red,
+                isReceived || isMint ? Icons.arrow_downward : Icons.arrow_upward,
+                color: amountColor,
                 size: 20,
               ),
             ],
           ),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                isReceived ? 'From' : 'To',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey[600],
-                ),
+          // Row 2: Amount (on its own line so it doesn't squeeze the name)
+          if (formattedAmount != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Row(
+                children: [
+                  Text(
+                    'Amount',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                  Spacer(),
+                  Flexible(
+                    child: Text(
+                      '$amountPrefix$formattedAmount',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: amountColor,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
               ),
-              Spacer(),
-              AddressWidget(
-                address: isReceived ? nftTransfer.sender.with0x : nftTransfer.recipient.with0x,
-                chainId: widget.safeAccount.network.chainId,
-                truncateLength: 8,
-                showBlockies: false,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey[600],
+            ),
+          // Row 3: Counterparty
+          if (!isMint && !isBurn)
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  counterpartyLabel,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey[600],
+                  ),
                 ),
-              ),
-            ],
-          ),
+                Spacer(),
+                AddressWidget(
+                  address: counterpartyAddress,
+                  chainId: widget.safeAccount.network.chainId,
+                  truncateLength: 8,
+                  showBlockies: false,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey[600],
+                  ),
+                ),
+              ],
+            ),
+          if (isMint || isBurn)
+            Row(
+              children: [
+                Icon(
+                  isMint ? Icons.add_circle_outline : Icons.remove_circle_outline,
+                  size: 14,
+                  color: isMint ? Colors.green[400] : Colors.red[400],
+                ),
+                SizedBox(width: 4),
+                Text(
+                  counterpartyLabel,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: isMint ? Colors.green[400] : Colors.red[400],
+                  ),
+                ),
+              ],
+            ),
           drawSeparatorLine ? Container(
             margin: EdgeInsets.only(top: 8),
             child: DottedLine(

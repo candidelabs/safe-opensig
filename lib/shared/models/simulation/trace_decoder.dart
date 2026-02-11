@@ -15,6 +15,9 @@ import 'package:web3dart/web3dart.dart';
 var _logsMapping = {
   "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef": "token-transfer",
   "0x8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925": "token-allowance-change",
+  // ERC-1155
+  "0xc3d58168c5ae7397731d063d5bbf3d657854427343f4c083240f7aacaa2d0f62": "erc1155-transfer-single",
+  "0x4a39dc06d4c0dbc64b70af90fd698a233a518aa5d07e595d983b8c0526c8f7fb": "erc1155-transfer-batch",
   //
   "0x9465fa0c962cc76958e6373a993326400c1c94f8be2fe3a952adfa7f60b2ea26": "safe-owner-addition",
   "0xf8d49fc529812e9a7c5c50e69c20f0dccc0db8fa95c98bc58cc9a4f1c1299eaf": "safe-owner-revocation",
@@ -177,6 +180,43 @@ class TraceDecoder {
             network: network
           );
         }
+      // ERC-1155 TransferSingle(operator, from, to, id, value)
+      } else if (eventName == "erc1155-transfer-single"){
+        var sender = decodeAbi(["address"], hexToBytes(topics[2]))[0] as EthereumAddress;
+        var recipient = decodeAbi(["address"], hexToBytes(topics[3]))[0] as EthereumAddress;
+        if (sender.with0x.toLowerCase() != account && recipient.with0x.toLowerCase() != account) return null;
+        var params = decodeAbi(["uint256", "uint256"], hexToBytes(log["data"]));
+        var tokenId = params[0] as BigInt;
+        var amount = params[1] as BigInt;
+        return NFTTransfer(
+          collection: emittedBy,
+          sender: sender,
+          recipient: recipient,
+          tokenId: tokenId,
+          amount: amount,
+          network: network,
+        );
+      // ERC-1155 TransferBatch(operator, from, to, ids[], values[])
+      } else if (eventName == "erc1155-transfer-batch"){
+        var sender = decodeAbi(["address"], hexToBytes(topics[2]))[0] as EthereumAddress;
+        var recipient = decodeAbi(["address"], hexToBytes(topics[3]))[0] as EthereumAddress;
+        if (sender.with0x.toLowerCase() != account && recipient.with0x.toLowerCase() != account) return null;
+        var params = decodeAbi(["uint256[]", "uint256[]"], hexToBytes(log["data"]));
+        var ids = (params[0] as List).cast<BigInt>();
+        var amounts = (params[1] as List).cast<BigInt>();
+        // Return a list of NFTTransfers for batch
+        List<NFTTransfer> batchTransfers = [];
+        for (var i = 0; i < ids.length; i++) {
+          batchTransfers.add(NFTTransfer(
+            collection: emittedBy,
+            sender: sender,
+            recipient: recipient,
+            tokenId: ids[i],
+            amount: amounts[i],
+            network: network,
+          ));
+        }
+        return batchTransfers;
       }else if (eventName == "safe-owner-addition"){
         var addedOwner = decodeAbi(["address"], hexToBytes(topics[1]))[0] as EthereumAddress;
         return SafeSettingChange(
@@ -285,6 +325,11 @@ class TraceDecoder {
     for (var log in logs){
       var decodedLog = processLog(account, network, log);
       if (decodedLog == null) continue;
+      // Handle ERC-1155 TransferBatch which returns a list
+      if (decodedLog is List<NFTTransfer>){
+        nftTransfers.addAll(decodedLog);
+        continue;
+      }
       if (decodedLog is TokenTransfer){
         transfers.add(decodedLog);
       }else if (decodedLog is TokenAllowance){
@@ -314,12 +359,12 @@ class TraceDecoder {
         success: false,
         revertReason: trace["message"] as String? ?? "REVM execution error",
         dangerous: (false, null, ""),
-        transfers: [],
-        allowances: [],
-        nftTransfers: [],
-        nftAllowances: [],
-        safeSettingsChanges: [],
-        warningTransactions: [],
+        transfers: transfers,
+        allowances: allowances,
+        nftTransfers: nftTransfers,
+        nftAllowances: nftAllowances,
+        safeSettingsChanges: safeSettingsChanges,
+        warningTransactions: warningTransactions,
       );
     }
     var executionResult = trace["executionResult"] as Map<String, dynamic>;
