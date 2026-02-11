@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:safe_opensig/shared/constants/network_constants.dart';
 import 'package:safe_opensig/shared/models/network_model.dart';
 import 'package:safe_opensig/shared/models/safe_api_transaction_model.dart';
@@ -6,6 +7,9 @@ import 'package:safe_opensig/shared/models/safe_api_transaction_model.dart';
 /// Service for interacting with the Safe Transaction Service API
 /// The Safe Transaction Service provides APIs for fetching queued transactions,
 /// transaction history, and other Safe-related data.
+///
+/// Optionally supports authentication via API key set in SAFE_TX_SERVICE_API_KEY
+/// environment variable. If present, all requests will include an Authorization header.
 class SafeTransactionService {
   final Dio _dio;
   // You can find supported networks here: https://docs.safe.global/advanced/smart-account-supported-networks?service=Transaction+Service
@@ -24,14 +28,26 @@ class SafeTransactionService {
     42220,
   };
 
+  /// Builds HTTP headers for the Dio client.
+  /// Includes Accept header and optionally adds Authorization Bearer token
+  /// if SAFE_TX_SERVICE_API_KEY is set in environment variables.
+  static Map<String, String> _buildHeaders() {
+    final headers = <String, String>{'Accept': 'application/json'};
+
+    final apiKey = dotenv.env['SAFE_TX_SERVICE_API_KEY'];
+    if (apiKey != null && apiKey.isNotEmpty) {
+      headers['Authorization'] = 'Bearer $apiKey';
+    }
+
+    return headers;
+  }
+
   SafeTransactionService({Dio? dio})
     : _dio = dio ??
       Dio(BaseOptions(
         connectTimeout: const Duration(seconds: 10),
         receiveTimeout: const Duration(seconds: 10),
-        headers: {
-          'Accept': 'application/json',
-        },
+        headers: _buildHeaders(),
       ));
 
   /// Get the Safe Transaction Service base URL for a given chain ID
