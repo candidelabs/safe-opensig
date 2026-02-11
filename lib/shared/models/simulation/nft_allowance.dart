@@ -5,20 +5,24 @@ import 'package:wallet/wallet.dart';
 class NFTAllowance {
   EthereumAddress collection;
   EthereumAddress spender;
-  BigInt tokenId;
+  BigInt? tokenId; // null for ApprovalForAll
+  bool isApprovalForAll;
+  bool approved; // only relevant for ApprovalForAll (true = grant, false = revoke)
   Network network;
   NFTMetadata? metadata;
 
   NFTAllowance({
     required this.collection,
     required this.spender,
-    required this.tokenId,
+    this.tokenId,
+    this.isApprovalForAll = false,
+    this.approved = true,
     required this.network,
     this.metadata
   });
 
   Future<void> fetchMetadata() async {
-    metadata = await NFTMetadata.fromAddress(collection, tokenId, network);
+    metadata = await NFTMetadata.fromAddress(collection, tokenId ?? BigInt.zero, network);
     if (metadata != null){
       await metadata!.fetchTokenMetadata();
     }

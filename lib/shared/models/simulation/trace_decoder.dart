@@ -18,6 +18,8 @@ var _logsMapping = {
   // ERC-1155
   "0xc3d58168c5ae7397731d063d5bbf3d657854427343f4c083240f7aacaa2d0f62": "erc1155-transfer-single",
   "0x4a39dc06d4c0dbc64b70af90fd698a233a518aa5d07e595d983b8c0526c8f7fb": "erc1155-transfer-batch",
+  // ApprovalForAll (shared by ERC-721 and ERC-1155)
+  "0x17307eab39ab6107e8899845ad3d59bd9653f200f220920489ca2b5937696c31": "approval-for-all",
   //
   "0x9465fa0c962cc76958e6373a993326400c1c94f8be2fe3a952adfa7f60b2ea26": "safe-owner-addition",
   "0xf8d49fc529812e9a7c5c50e69c20f0dccc0db8fa95c98bc58cc9a4f1c1299eaf": "safe-owner-revocation",
@@ -217,6 +219,19 @@ class TraceDecoder {
           ));
         }
         return batchTransfers;
+      // ApprovalForAll(owner, operator, approved) - shared by ERC-721 and ERC-1155
+      } else if (eventName == "approval-for-all"){
+        var owner = decodeAbi(["address"], hexToBytes(topics[1]))[0] as EthereumAddress;
+        if (owner.with0x.toLowerCase() != account) return null;
+        var operator = decodeAbi(["address"], hexToBytes(topics[2]))[0] as EthereumAddress;
+        var approved = decodeAbi(["bool"], hexToBytes(log["data"]))[0] as bool;
+        return NFTAllowance(
+          collection: emittedBy,
+          spender: operator,
+          isApprovalForAll: true,
+          approved: approved,
+          network: network,
+        );
       }else if (eventName == "safe-owner-addition"){
         var addedOwner = decodeAbi(["address"], hexToBytes(topics[1]))[0] as EthereumAddress;
         return SafeSettingChange(

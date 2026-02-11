@@ -727,8 +727,9 @@ class _SafeTxSimulationScreenState extends State<SafeTxSimulationScreen> {
   }
 
   Widget _buildNFTAllowanceItem(NFTAllowance nftAllowance, bool drawSeparatorLine) {
-    // Check if this is a revocation (spender is zero address)
-    if (nftAllowance.spender.with0x.toLowerCase() == '0x0000000000000000000000000000000000000000') {
+    // Check if this is a revocation (spender is zero address or ApprovalForAll with approved=false)
+    if (nftAllowance.spender.with0x.toLowerCase() == '0x0000000000000000000000000000000000000000'
+        || (nftAllowance.isApprovalForAll && !nftAllowance.approved)) {
       return _buildRevokedNFTAllowanceItem(nftAllowance, drawSeparatorLine);
     }
 
@@ -748,7 +749,7 @@ class _SafeTxSimulationScreenState extends State<SafeTxSimulationScreen> {
                     style: TextStyle(fontSize: 12, color: Colors.grey[600], fontWeight: FontWeight.bold),
                     children: [
                       WidgetSpan(
-                        child: Icon(Icons.warning_amber, size: 13, color: Colors.orange,)
+                        child: Icon(Icons.warning_amber, size: 13, color: nftAllowance.isApprovalForAll ? Colors.red : Colors.orange,)
                       ),
                       TextSpan(
                         text: "  You are giving ",
@@ -762,23 +763,36 @@ class _SafeTxSimulationScreenState extends State<SafeTxSimulationScreen> {
                           style: TextStyle(fontSize: 12, color: Colors.grey[400], fontWeight: FontWeight.w800),
                         ),
                       ),
-                      TextSpan(
-                        text: " permission to transfer NFT ",
-                      ),
-                      TextSpan(
-                        text: "${metadata.collectionName} (${metadata.symbol})",
-                        style: TextStyle(color: Colors.grey[400], fontWeight: FontWeight.w800),
-                      ),
-                      TextSpan(
-                        text: " with Token ID ",
-                      ),
-                      TextSpan(
-                        text: "${nftAllowance.tokenId}",
-                        style: TextStyle(color: Colors.grey[400], fontWeight: FontWeight.w800),
-                      ),
-                      TextSpan(
-                        text: " from your account",
-                      ),
+                      if (nftAllowance.isApprovalForAll) ...[
+                        TextSpan(
+                          text: " permission to transfer ALL tokens in ",
+                        ),
+                        TextSpan(
+                          text: "${metadata.collectionName} (${metadata.symbol})",
+                          style: TextStyle(color: Colors.grey[400], fontWeight: FontWeight.w800),
+                        ),
+                        TextSpan(
+                          text: " from your account",
+                        ),
+                      ] else ...[
+                        TextSpan(
+                          text: " permission to transfer NFT ",
+                        ),
+                        TextSpan(
+                          text: "${metadata.collectionName} (${metadata.symbol})",
+                          style: TextStyle(color: Colors.grey[400], fontWeight: FontWeight.w800),
+                        ),
+                        TextSpan(
+                          text: " with Token ID ",
+                        ),
+                        TextSpan(
+                          text: "${nftAllowance.tokenId}",
+                          style: TextStyle(color: Colors.grey[400], fontWeight: FontWeight.w800),
+                        ),
+                        TextSpan(
+                          text: " from your account",
+                        ),
+                      ],
                     ]
                   ),
                 ),
@@ -817,20 +831,30 @@ class _SafeTxSimulationScreenState extends State<SafeTxSimulationScreen> {
                       WidgetSpan(
                         child: Icon(Icons.check_circle_rounded, size: 13, color: Colors.green,)
                       ),
-                      TextSpan(
-                        text: "  You are revoking the approval for NFT ",
-                      ),
-                      TextSpan(
-                        text: "${metadata.collectionName} (${metadata.symbol})",
-                        style: TextStyle(color: Colors.grey[400], fontWeight: FontWeight.w800),
-                      ),
-                      TextSpan(
-                        text: " with Token ID ",
-                      ),
-                      TextSpan(
-                        text: "${nftAllowance.tokenId}",
-                        style: TextStyle(color: Colors.grey[400], fontWeight: FontWeight.w800),
-                      ),
+                      if (nftAllowance.isApprovalForAll) ...[
+                        TextSpan(
+                          text: "  You are revoking operator approval for ALL tokens in ",
+                        ),
+                        TextSpan(
+                          text: "${metadata.collectionName} (${metadata.symbol})",
+                          style: TextStyle(color: Colors.grey[400], fontWeight: FontWeight.w800),
+                        ),
+                      ] else ...[
+                        TextSpan(
+                          text: "  You are revoking the approval for NFT ",
+                        ),
+                        TextSpan(
+                          text: "${metadata.collectionName} (${metadata.symbol})",
+                          style: TextStyle(color: Colors.grey[400], fontWeight: FontWeight.w800),
+                        ),
+                        TextSpan(
+                          text: " with Token ID ",
+                        ),
+                        TextSpan(
+                          text: "${nftAllowance.tokenId}",
+                          style: TextStyle(color: Colors.grey[400], fontWeight: FontWeight.w800),
+                        ),
+                      ],
                     ]
                   ),
                 ),
