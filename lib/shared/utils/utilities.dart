@@ -236,19 +236,8 @@ class Utilities {
         final result = response as Map<String, dynamic>;
         return result.containsKey('accountProof');
       } on RPCError catch (e) {
-        final message = e.message.toLowerCase();
-        const unsupportedPatterns = [
-          'not found',
-          'not available',
-          'not supported',
-          'does not exist',
-          'unsupported',
-          'method not allowed',
-        ];
-        for (final pattern in unsupportedPatterns) {
-          if (message.contains(pattern)) return false;
-        }
-        return true;
+        // Any RPC error should be treated as the method is not available or not allowed
+        return false;
       } finally {
         client.dispose();
       }
@@ -290,19 +279,8 @@ class Utilities {
         if (storageValue != "0x0000000000000000000000000000000000000000000000000000000000000055") return false;
         return true;
       } on RPCError catch (e) {
-        final message = e.message.toLowerCase();
-        const unsupportedPatterns = [
-          'not found',
-          'not available',
-          'not supported',
-          'does not exist',
-          'unsupported',
-          'method not allowed',
-        ];
-        for (final pattern in unsupportedPatterns) {
-          if (message.contains(pattern)) return false;
-        }
-        return true;
+        // Any RPC error should be treated as the method is not available or not allowed
+        return false;
       } finally {
         client.dispose();
       }
