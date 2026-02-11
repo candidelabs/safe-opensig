@@ -35,6 +35,10 @@ class _NetworkConfigOverrideScreenState
   final Map<String, bool?> _chainIdResults = {};
   bool _chainIdChecked = false;
 
+  // eth_getProof support state for secondary nodes: url -> true (ok), false (failed)
+  final Map<String, bool?> _ethGetProofResults = {};
+  bool _ethGetProofChecked = false;
+
   @override
   void initState() {
     super.initState();
@@ -254,6 +258,50 @@ class _NetworkConfigOverrideScreenState
     if (duplicatesRemoved > 0 && mounted) {
       final proceed = await _showDuplicateNodesWarningDialog(duplicatesRemoved);
       if (!proceed) return;
+    }
+
+    // Step 3: Verify eth_getProof support on all secondary nodes
+    setState(() {
+      _isChecking = true;
+      _ethGetProofResults.clear();
+      _ethGetProofChecked = false;
+    });
+
+    final proofFutures = <Future<void>>[];
+    for (final url in deduplicatedSecondary) {
+      proofFutures.add(
+        Utilities.checkEthGetProofSupport(url).then((ok) {
+          if (mounted) {
+            setState(() => _ethGetProofResults[url] = ok);
+          }
+        }),
+      );
+    }
+    await Future.wait(proofFutures);
+
+    if (mounted) {
+      setState(() {
+        _isChecking = false;
+        _ethGetProofChecked = true;
+      });
+    }
+    if (!mounted) return;
+
+    final proofFailedUrls = deduplicatedSecondary
+        .where((url) => _ethGetProofResults[url] == false)
+        .toList();
+
+    if (proofFailedUrls.isNotEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            '${proofFailedUrls.length} secondary node(s) do not support '
+            'eth_getProof, which is required for state verification. '
+            'Replace the failing node(s) before saving.',
+          ),
+        ),
+      );
+      return;
     }
 
     // Require at least 1 unique secondary node after deduplication
@@ -625,6 +673,12 @@ class _NetworkConfigOverrideScreenState
         _chainIdResults.clear();
       });
     }
+    if (_ethGetProofChecked) {
+      setState(() {
+        _ethGetProofChecked = false;
+        _ethGetProofResults.clear();
+      });
+    }
     if (_showDuplicateWarnTrailingIcon){
       setState(() {
         _showDuplicateWarnTrailingIcon = false;
@@ -632,9 +686,12 @@ class _NetworkConfigOverrideScreenState
     }
   }
 
-  Widget? _buildChainIdStatusIcon(bool? result, bool isSecondary) {
+  Widget? _buildChainIdStatusIcon(bool? result, bool isSecondary, {String? url}) {
     if (isSecondary && _showDuplicateWarnTrailingIcon){
       return const Icon(Icons.warning_amber_rounded, color: Colors.amber, size: 20);
+    }
+    if (isSecondary && url != null && _ethGetProofChecked && _ethGetProofResults[url] == false) {
+      return const Icon(Icons.cancel, color: Colors.red, size: 20);
     }
     if (result == null) return null;
     if (result) {
@@ -680,7 +737,7 @@ class _NetworkConfigOverrideScreenState
                             minWidth: 32,
                             minHeight: 0,
                           ),
-                          suffixIcon: _buildChainIdStatusIcon(chainResult, true),
+                          suffixIcon: _buildChainIdStatusIcon(chainResult, true, url: url),
                         ),
                         keyboardType: TextInputType.url,
                         validator: (value) =>
@@ -710,6 +767,17 @@ class _NetworkConfigOverrideScreenState
                       'Will be discarded — chain ID mismatch or unreachable',
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: Colors.amber.shade700,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ),
+                if (_ethGetProofChecked && _ethGetProofResults[url] == false)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4, left: 4, bottom: 4),
+                    child: Text(
+                      'Does not support eth_getProof — required for state verification',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.error,
                         fontSize: 11,
                       ),
                     ),

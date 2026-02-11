@@ -224,6 +224,39 @@ class Utilities {
     }
   }
 
+  static Future<bool> checkEthGetProofSupport(String rpcUrl) async {
+    try {
+      final client = Web3Client(rpcUrl, http.Client());
+      try {
+        final response = await client.makeRPCCall('eth_getProof', [
+          '0x0000000000000000000000000000000000000000',
+          [],
+          'latest',
+        ]).timeout(const Duration(seconds: 7));
+        final result = response as Map<String, dynamic>;
+        return result.containsKey('accountProof');
+      } on RPCError catch (e) {
+        final message = e.message.toLowerCase();
+        const unsupportedPatterns = [
+          'not found',
+          'not available',
+          'not supported',
+          'does not exist',
+          'unsupported',
+          'method not allowed',
+        ];
+        for (final pattern in unsupportedPatterns) {
+          if (message.contains(pattern)) return false;
+        }
+        return true;
+      } finally {
+        client.dispose();
+      }
+    } catch (_) {
+      return false;
+    }
+  }
+
   static Future<bool> checkDebugTraceCallSupport(String rpcUrl) async {
     try {
       final client = Web3Client(rpcUrl, http.Client());
