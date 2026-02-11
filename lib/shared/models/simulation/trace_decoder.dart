@@ -27,29 +27,6 @@ var _logsMapping = {
   "0x1151116914515bc0891ff9047a6cb32cf902546f83066499bcf8ba33d2353fa2": "safe-guard-change",
 };
 
-var _trustedSingletons = {
-  "0xb6029EA3B2c51D09a50B53CA8012FeEB05bDa35A".toLowerCase(), // 1.0.0
-  //
-  "0x34CfAC646f301356fAa8B21e94227e3583Fe3F5F".toLowerCase(), // 1.1.1
-  //
-  "0x6851D6fDFAfD08c0295C392436245E5bc78B0185".toLowerCase(), // 1.2.0
-  //
-  "0xd9Db270c1B5E3Bd161E8c8503c55cEABeE709552".toLowerCase(), // 1.3.0
-  "0x69f4D1788e39c87893C980c06EdF4b7f686e2938".toLowerCase(), // 1.3.0
-  "0xB00ce5CCcdEf57e539ddcEd01DF43a13855d9910".toLowerCase(), // 1.3.0
-  "0x3E5c63644E683549055b9Be8653de26E0B4CD36E".toLowerCase(), // 1.3.0 L2
-  "0xfb1bffC9d739B8D520DaF37dF666da4C687191EA".toLowerCase(), // 1.3.0 L2
-  "0x1727c2c531cf966f902E5927b98490fDFb3b2b70".toLowerCase(), // 1.3.0 L2
-  //
-  "0x41675C099F32341bf84BFc5382aF534df5C7461a".toLowerCase(), // 1.4.1
-  "0xC35F063962328aC65cED5D4c3fC5dEf8dec68dFa".toLowerCase(), // 1.4.1
-  "0x29fcB43b46531BcA003ddC8FCB67FFE91900C762".toLowerCase(), // 1.4.1 L2
-  "0x610fcA2e0279Fa1F8C00c8c2F71dF522AD469380".toLowerCase(), // 1.4.1 L2
-  //
-  "0xFf51A5898e281Db6DfC7855790607438dF2ca44b".toLowerCase(), // 1.5.0
-  "0xEdd160fEBBD92E350D4D398fb636302fccd67C7e".toLowerCase(), // 1.5.0 L2
-};
-
 var _trustedDelegatees = {
   // MultiSend
   "0x8D29bE29923b68abfDD21e541b9374737B49cdAD".toLowerCase(), // 1.1.1

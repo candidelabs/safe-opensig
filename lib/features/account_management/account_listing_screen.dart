@@ -198,13 +198,27 @@ class _AccountCard extends StatelessWidget {
                         ),
                         const SizedBox(height: 4),
                         // Address
-                        AddressWidget(
-                          address: account.address,
-                          chainId: account.network.chainId,
-                          truncateLength: 6,
-                          showBlockies: false,
-                          interactive: false,
-                          style: Theme.of(context).textTheme.bodyMedium,
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            AddressWidget(
+                              address: account.address,
+                              chainId: account.network.chainId,
+                              truncateLength: 6,
+                              showBlockies: false,
+                              interactive: false,
+                              style: Theme.of(context).textTheme.bodyMedium,
+                            ),
+                            const SizedBox(width: 4,),
+                            Text(
+                              'v${account.version}',
+                              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: Theme.of(context).textTheme.labelSmall?.color?.withValues(alpha: 0.6),
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
