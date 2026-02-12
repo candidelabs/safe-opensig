@@ -39,6 +39,7 @@ class _AccountAdditionFormScreenState extends State<AccountAdditionFormScreen> {
   String? _recommendedVersion;
 
   final List<String> _versions = [
+    '1.5.0',
     '1.4.1',
     '1.3.0',
     '1.2.0',
@@ -199,10 +200,8 @@ class _AccountAdditionFormScreenState extends State<AccountAdditionFormScreen> {
             const SizedBox(height: 20),
             SizedBox(
               width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: () => Navigator.of(context).pop(true),
-                icon: const Icon(Icons.save_outlined, size: 18),
-                label: const Text('Save Anyway'),
+              child: OutlinedButton(
+                onPressed: () => Navigator.of(context).pop(false),
                 style: OutlinedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 10),
                   side: BorderSide(color: theme.colorScheme.primary),
@@ -210,15 +209,17 @@ class _AccountAdditionFormScreenState extends State<AccountAdditionFormScreen> {
                     borderRadius: BorderRadius.circular(10),
                   ),
                 ),
+                child: const Text('Go Back'),
               ),
             ),
             const SizedBox(height: 8),
             SizedBox(
               width: double.infinity,
-              child: TextButton(
-                onPressed: () => Navigator.of(context).pop(false),
-                child: Text(
-                  'Go Back',
+              child: TextButton.icon(
+                onPressed: () => Navigator.of(context).pop(true),
+                icon: const Icon(Icons.save_outlined, size: 18),
+                label: Text(
+                  'Save Anyway',
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
                   ),
