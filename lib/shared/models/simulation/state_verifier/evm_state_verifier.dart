@@ -51,11 +51,25 @@ class EVMStateVerifier {
   }) async {
     try {
       // Get proof from proof node
-      final proof = await proofNodeClient.makeRPCCall('eth_getProof', [
-        account.with0x,
-        storageKeys.toList(),
-        blockNumber.toHex(),
-      ]);
+      dynamic proof;
+      int retries = 0;
+      while (retries < 10){
+        try {
+          proof = await proofNodeClient.makeRPCCall('eth_getProof', [
+            account.with0x,
+            storageKeys.toList(),
+            blockNumber.toHex(),
+          ]);
+          break;
+        } catch (e) {
+          print("Retrying eth_getProof ($retries): $e");
+          retries++;
+          await Future.delayed(Duration(milliseconds: 500));
+        }
+      }
+      if (proof == null){
+        throw "eth_getProof failed to fetch proof for block at #$blockNumber";
+      }
 
       // Fetch state roots from all verification nodes and verify state root consensus (or use provided state root if available)
       if (stateRoot == null){
