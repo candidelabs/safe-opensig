@@ -1,12 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:safe_opensig/core/theme/theme_config.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-class SettingsScreen extends StatelessWidget {
+class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
 
+  @override
+  State<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends State<SettingsScreen> {
   static const _docsUrl = 'https://github.com/candidelabs/safe-opensig';
+
+  String _version = '';
+
+  @override
+  void initState() {
+    super.initState();
+    PackageInfo.fromPlatform().then((info) {
+      if (mounted) setState(() => _version = info.version);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -35,10 +51,13 @@ class SettingsScreen extends StatelessWidget {
             _SettingsTile(
               icon: Icons.info_outline,
               title: 'About Safe Opensig',
-              trailing: Text(
-                'v1.0.0',
-                style: theme.textTheme.bodySmall?.copyWith(color: mutedColor),
-              ),
+              trailing: _version.isNotEmpty
+                  ? Text(
+                      'v$_version',
+                      style:
+                          theme.textTheme.bodySmall?.copyWith(color: mutedColor),
+                    )
+                  : null,
               onTap: () => _showAbout(context),
             ),
           ],
@@ -57,7 +76,7 @@ class SettingsScreen extends StatelessWidget {
   void _showAbout(BuildContext context) {
     showDialog(
       context: context,
-      builder: (context) => const _AboutDialog(),
+      builder: (context) => _AboutDialog(version: _version),
     );
   }
 }
@@ -133,7 +152,9 @@ class _NetworkConfigCard extends StatelessWidget {
 }
 
 class _AboutDialog extends StatelessWidget {
-  const _AboutDialog();
+  const _AboutDialog({required this.version});
+
+  final String version;
 
   static const _githubUrl = 'https://github.com/candidelabs/safe-opensig';
   static const _xUrl = 'https://x.com/candidelabs';
@@ -177,7 +198,7 @@ class _AboutDialog extends StatelessWidget {
               ),
               const SizedBox(height: 4),
               Text(
-                'v1.0.0',
+                version.isNotEmpty ? 'v$version' : '',
                 style: theme.textTheme.bodySmall?.copyWith(color: mutedColor),
               ),
               const SizedBox(height: 6),
