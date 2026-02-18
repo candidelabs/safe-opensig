@@ -45,7 +45,9 @@ class TokenMetadata {
         var decimalsHex = results[2];
         name = decodeAbi(["string"], hexToBytes(nameHex))[0];
         symbol = decodeAbi(["string"], hexToBytes(symbolHex))[0];
-        decimals = BigInt.parse(decimalsHex.replaceFirst("0x", ""), radix: 16).toInt();
+        // Decode only the first 32-byte ABI word to handle malformed responses
+        // where trailing zero bytes inflate the raw hex to absurd values.
+        decimals = (decodeAbi(["uint8"], hexToBytes(decimalsHex))[0] as BigInt).toInt();
       }
     }
     String logoUri = TokensDirectory.getTokenLogo(address.with0x.toLowerCase(), network.chainId);

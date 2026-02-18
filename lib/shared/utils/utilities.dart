@@ -139,6 +139,10 @@ class Utilities {
       String? symbol,
     }
   ) {
+    // Safety cap: no legitimate token exceeds a UINT8_MAX_VALUE (255) decimals.
+    // Malformed contracts can return absurdly high values that hang the app.
+    // If you believe there's legit actual use cases where the decimals of a token is > 255, please open an issue.
+    decimals = min(decimals, 255);
     BigInt rawAmount;
     if (amount is String) {
       rawAmount = BigInt.parse(amount);
