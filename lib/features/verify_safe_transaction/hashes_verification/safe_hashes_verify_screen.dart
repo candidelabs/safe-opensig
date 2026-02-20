@@ -41,11 +41,14 @@ class _SafeHashesVerifyScreenState extends State<SafeHashesVerifyScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    _NonceControl(
-                      initialValue: widget.safeTransaction.nonce,
-                      latestNonce: widget.safeTransaction.latestNonce,
-                      onChange: (_nonce) => setState(() => widget.safeTransaction.nonce = _nonce),
-                    ),
+                    if (widget.safeTransaction.nonceIsEditable)
+                      _NonceControl(
+                        initialValue: widget.safeTransaction.nonce,
+                        latestNonce: widget.safeTransaction.latestNonce,
+                        onChange: (_nonce) => setState(() => widget.safeTransaction.nonce = _nonce),
+                      )
+                    else
+                      _NonceDisplay(nonce: widget.safeTransaction.nonce),
                     const SizedBox(height: 16),
                     _AccountDetailsCard(safeAccount: widget.safeAccount),
                     const SizedBox(height: 16),
@@ -441,6 +444,7 @@ class _TransactionJsonCardState extends State<_TransactionJsonCard> with SingleT
       'gasPrice': widget.safeTransaction.gasPrice.toString(),
       'gasToken': widget.safeTransaction.gasToken,
       'refundReceiver': widget.safeTransaction.refundReceiver,
+      'nonce': widget.safeTransaction.nonce?.toString(),
     };
     final jsonString = const JsonEncoder.withIndent('  ').convert(transactionData);
     return Card(
@@ -516,6 +520,35 @@ class _TransactionJsonCardState extends State<_TransactionJsonCard> with SingleT
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _NonceDisplay extends StatelessWidget {
+  final BigInt? nonce;
+
+  const _NonceDisplay({required this.nonce});
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: Row(
+          children: [
+            Text(
+              'Nonce',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const Spacer(),
+            Text(
+              nonce?.toString() ?? '—',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -27,6 +27,10 @@ class SafeTransaction {
   String refundReceiver;
   BigInt? nonce;
   BigInt? latestNonce;
+  /// True when the nonce was not present in the input (calldata path) and was
+  /// inferred from the blockchain in [ensureNonce]. False for API and JSON
+  /// inputs where the nonce is provided explicitly and should not be changed.
+  bool nonceIsEditable = false;
 
   SafeTransaction({
     required this.to,
@@ -65,9 +69,11 @@ class SafeTransaction {
       return (false, 'Failed to fetch nonce');
     }
     latestNonce = fetchedNonce;
-    // If nonce is not set (CallData input), use the latest nonce
+    // If nonce is not set (CallData input), use the latest nonce and mark it
+    // as editable so the verify screen lets the user adjust it.
     if (nonce == null) {
       nonce = fetchedNonce;
+      nonceIsEditable = true;
     }
     return (true, '');
   }
