@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:safe_opensig/shared/models/safe_api_transaction_model.dart';
+import 'package:safe_opensig/shared/models/simulation/trace_decoder.dart';
 import 'package:safe_opensig/shared/utils/utilities.dart';
 import 'package:safe_opensig/shared/widgets/address_widget.dart';
 
@@ -34,7 +35,9 @@ class SafeAPITransactionCard extends StatelessWidget {
     }
   }
 
-  bool get _isDelegateCall => transaction.operation == 1;
+  bool get _isDelegateCall =>
+      transaction.operation == 1 &&
+      !TraceDecoder.trustedDelegatees.contains(transaction.to.toLowerCase());
 
   String _formatDate(DateTime date) {
     final local = date.toLocal();

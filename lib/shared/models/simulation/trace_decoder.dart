@@ -32,25 +32,24 @@ var _logsMapping = {
   "0x1151116914515bc0891ff9047a6cb32cf902546f83066499bcf8ba33d2353fa2": "safe-guard-change",
 };
 
-var _trustedDelegatees = {
-  // MultiSend
-  "0x8D29bE29923b68abfDD21e541b9374737B49cdAD".toLowerCase(), // 1.1.1
-  "0xA238CBeb142c10Ef7Ad8442C6D1f9E89e07e7761".toLowerCase(), // 1.3.0
-  "0x998739BFdAAdde7C933B942a68053933098f9EDa".toLowerCase(), // 1.3.0
-  "0x0dFcccB95225ffB03c6FBB2559B530C2B7C8A912".toLowerCase(), // 1.3.0
-  "0x38869bf66a61cF6bDB996A6aE40D5853Fd43B526".toLowerCase(), // 1.4.1
-  "0x309D0B190FeCCa8e1D5D8309a16F7e3CB133E885".toLowerCase(), // 1.4.1
-  "0x218543288004CD07832472D464648173c77D7eB7".toLowerCase(), // 1.5.0
-  // MultiSendCallOnly
-  "0x40A2aCCbd92BCA938b02010E17A5b8929b49130D".toLowerCase(), // 1.3.0
-  "0xA1dabEF33b3B82c7814B6D82A79e50F4AC44102B".toLowerCase(), // 1.3.0
-  "0xf220D3b4DFb23C4ade8C88E526C1353AbAcbC38F".toLowerCase(), // 1.3.0
-  "0x9641d764fc13c8B624c04430C7356C1C7C8102e2".toLowerCase(), // 1.4.1
-  "0x0408EF011960d02349d50286D20531229BCef773".toLowerCase(), // 1.4.1
-  "0xA83c336B20401Af773B6219BA5027174338D1836".toLowerCase(), // 1.5.0
-};
-
 class TraceDecoder {
+  static final Set<String> trustedDelegatees = {
+    // MultiSend
+    "0x8D29bE29923b68abfDD21e541b9374737B49cdAD".toLowerCase(), // 1.1.1
+    "0xA238CBeb142c10Ef7Ad8442C6D1f9E89e07e7761".toLowerCase(), // 1.3.0
+    "0x998739BFdAAdde7C933B942a68053933098f9EDa".toLowerCase(), // 1.3.0
+    "0x0dFcccB95225ffB03c6FBB2559B530C2B7C8A912".toLowerCase(), // 1.3.0
+    "0x38869bf66a61cF6bDB996A6aE40D5853Fd43B526".toLowerCase(), // 1.4.1
+    "0x309D0B190FeCCa8e1D5D8309a16F7e3CB133E885".toLowerCase(), // 1.4.1
+    "0x218543288004CD07832472D464648173c77D7eB7".toLowerCase(), // 1.5.0
+    // MultiSendCallOnly
+    "0x40A2aCCbd92BCA938b02010E17A5b8929b49130D".toLowerCase(), // 1.3.0
+    "0xA1dabEF33b3B82c7814B6D82A79e50F4AC44102B".toLowerCase(), // 1.3.0
+    "0xf220D3b4DFb23C4ade8C88E526C1353AbAcbC38F".toLowerCase(), // 1.3.0
+    "0x9641d764fc13c8B624c04430C7356C1C7C8102e2".toLowerCase(), // 1.4.1
+    "0x0408EF011960d02349d50286D20531229BCef773".toLowerCase(), // 1.4.1
+    "0xA83c336B20401Af773B6219BA5027174338D1836".toLowerCase(), // 1.5.0
+  };
   String accountSingleton;
   List<TokenTransfer> transfers = [];
   List<TokenAllowance> allowances = [];
@@ -263,7 +262,7 @@ class TraceDecoder {
     var accountAddress = account.toLowerCase();
     if (callType == "DELEGATECALL"){
       if (from == accountAddress){
-        if (to != accountSingleton && !_trustedDelegatees.contains(to)){
+        if (to != accountSingleton && !trustedDelegatees.contains(to)){
           warningTransactions.add(
             WarningTransaction(
               type: WarningTransactionType.DELEGATE_CALL,
