@@ -508,6 +508,25 @@ class _AccountAdditionFormScreenState extends State<AccountAdditionFormScreen> {
                 },
               ),
               const SizedBox(height: 32),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.lock_outline_rounded,
+                    size: 12,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.45),
+                  ),
+                  const SizedBox(width: 5),
+                  Text(
+                    'Saved locally · never shared',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      fontSize: 11,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.45),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
               ElevatedButton(
                 onPressed: _submitForm,
                 child: Text(isEditing ? 'Update' : 'Add'),

@@ -166,6 +166,7 @@ class _AboutDialog extends StatelessWidget {
     ('Multi-node state verification for trust minimization', Icons.hub_outlined),
     ('Hardware wallet screen preview (Ledger)', Icons.security_outlined),
     ('13+ EVM chains supported', Icons.language),
+    ('No data collection. Stored locally on device', Icons.lock_outline),
   ];
 
   Future<void> _open(String url) async {

@@ -34,6 +34,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           'Connect your Safe account and start using Safe OpenSig to add an extra layer of security '
           'to your transactions with a simple second-factor verification.',
     ),
+    OnboardingPageData(
+      icon: Icons.lock_outline_rounded,
+      title: 'Your Privacy',
+      description:
+          'Your Safe accounts are saved locally on this device. '
+          'No data is ever collected or shared.',
+    ),
   ];
 
   @override
