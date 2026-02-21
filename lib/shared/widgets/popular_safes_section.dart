@@ -27,18 +27,16 @@ class _PopularSafesSectionState extends State<PopularSafesSection> {
 
   Future<void> _findFirstWithTransactions() async {
     final service = SafeTransactionService();
-    for (final safe in popularSafes) {
-      final (success, txs, _) = await service.getQueuedTransactions(
-        safeAddress: safe.address,
-        chainId: safe.chainId,
-      );
-      if (success && txs != null && txs.isNotEmpty) {
-        if (mounted) setState(() { _safe = safe; _loading = false; });
-        return;
-      }
-    }
-    // None had queued transactions — section stays hidden
-    if (mounted) setState(() => _loading = false);
+    // Check only Yearn — it's reliably active and resolves quickly
+    final yearn = popularSafes.first;
+    final (success, txs, _) = await service.getQueuedTransactions(
+      safeAddress: yearn.address,
+      chainId: yearn.chainId,
+    );
+    final safe = (success && txs != null && txs.isNotEmpty)
+        ? yearn
+        : popularSafes.last; // guaranteed demo Safe fallback
+    if (mounted) setState(() { _safe = safe; _loading = false; });
   }
 
   @override
