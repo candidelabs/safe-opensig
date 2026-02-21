@@ -8,6 +8,7 @@ import 'package:safe_opensig/shared/constants/event_bus.dart';
 import 'package:safe_opensig/shared/models/safe_account_model.dart';
 import 'package:safe_opensig/shared/widgets/network_logo.dart';
 import 'package:safe_opensig/shared/widgets/address_widget.dart';
+import 'package:safe_opensig/shared/widgets/popular_safes_section.dart';
 
 class AccountListingScreen extends StatefulWidget {
   const AccountListingScreen({super.key});
@@ -308,24 +309,34 @@ class _AccountCard extends StatelessWidget {
 class _EmptyStateWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Center(
+    final theme = Theme.of(context);
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: ThemeConfig.spacingMedium),
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          const SizedBox(height: 40),
+
+          // Hero section
           Icon(
             Icons.account_balance_wallet_outlined,
-            size: 80,
-            color: Theme.of(context).colorScheme.primary,
+            size: 72,
+            color: theme.colorScheme.primary,
           ),
-          const SizedBox(height: 24),
-          const Text(
+          const SizedBox(height: 20),
+          Text(
             'No accounts yet',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            style: theme.textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
+            textAlign: TextAlign.center,
           ),
           const SizedBox(height: 8),
-          const Text(
-            'Add your first account to get started',
-            style: TextStyle(fontSize: 16),
+          Text(
+            'Add your Safe account to start\nverifying transactions',
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.6),
+            ),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 24),
@@ -335,6 +346,32 @@ class _EmptyStateWidget extends StatelessWidget {
             },
             child: const Text('Add Account'),
           ),
+
+          const SizedBox(height: 48),
+
+          // Divider
+          Row(
+            children: [
+              const Expanded(child: Divider()),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: Text(
+                  'or explore',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.textTheme.bodySmall?.color
+                        ?.withValues(alpha: 0.5),
+                  ),
+                ),
+              ),
+              const Expanded(child: Divider()),
+            ],
+          ),
+
+          const SizedBox(height: 24),
+
+          const PopularSafesSection(),
+
+          const SizedBox(height: 32),
         ],
       ),
     );
