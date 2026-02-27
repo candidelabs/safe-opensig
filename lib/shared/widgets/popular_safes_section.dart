@@ -95,68 +95,77 @@ class _PopularSafeCard extends StatelessWidget {
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        child: Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (network != null) ...[
-              NetworkLogo(network: network, size: 32),
-              const SizedBox(width: 12),
-            ],
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    safe.displayName,
-                    style: theme.textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    safe.description,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.textTheme.bodySmall?.color
-                          ?.withValues(alpha: 0.7),
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    metaParts,
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: theme.textTheme.labelSmall?.color
-                          ?.withValues(alpha: 0.6),
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
+            Row(
+              children: [
+                if (network != null) ...[
+                  NetworkLogo(network: network, size: 32),
+                  const SizedBox(width: 12),
                 ],
-              ),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        safe.displayName,
+                        style: theme.textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        safe.description,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.textTheme.bodySmall?.color
+                              ?.withValues(alpha: 0.7),
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        metaParts,
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: theme.textTheme.labelSmall?.color
+                              ?.withValues(alpha: 0.6),
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
-            TextButton(
-              onPressed: () => _onExplore(context),
-              style: TextButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                minimumSize: Size.zero,
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    'Explore',
-                    style: theme.textTheme.labelMedium?.copyWith(
-                      color: theme.colorScheme.primary,
-                      fontWeight: FontWeight.w600,
+            const SizedBox(height: 8),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(
+                onPressed: () => _onExplore(context),
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Explore',
+                      style: theme.textTheme.labelMedium?.copyWith(
+                        color: theme.colorScheme.primary,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 2),
-                  Icon(
-                    Icons.arrow_forward,
-                    size: 14,
-                    color: theme.colorScheme.primary,
-                  ),
-                ],
+                    const SizedBox(width: 2),
+                    Icon(
+                      Icons.arrow_forward,
+                      size: 14,
+                      color: theme.colorScheme.primary,
+                    ),
+                  ],
+                ),
               ),
             ),
           ],
