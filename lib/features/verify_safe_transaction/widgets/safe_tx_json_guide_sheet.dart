@@ -12,7 +12,7 @@ class SafeTxJsonGuideSheet extends StatelessWidget {
         const Padding(
           padding: EdgeInsets.symmetric(horizontal: 16.0),
           child: Text(
-            'How to get transaction data ?',
+            'How to get transaction data?',
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,

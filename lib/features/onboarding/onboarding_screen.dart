@@ -18,8 +18,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       icon: Icons.security_rounded,
       title: 'Secure Your Assets',
       description:
-          'Safe OpenSig is your second factor verification app for Safe transactions. '
-          'Keep your digital assets secure with easy-to-use verification/simulation.',
+          'Safe OpenSig lets you see exactly what a Safe transaction will do before you sign it. '
+          'Verify and simulate every transaction so you never sign blindly.',
     ),
     OnboardingPageData(
       icon: Icons.account_balance_wallet_rounded,
@@ -31,8 +31,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       icon: Icons.rocket_launch_rounded,
       title: 'Get Started',
       description:
-          'Connect your Safe account and start using Safe OpenSig to add an extra layer of security '
-          'to your transactions with a simple second-factor verification.',
+          'Add your Safe account to start using Safe OpenSig. '
+          'Check every transaction before it reaches your hardware wallet.',
     ),
     OnboardingPageData(
       icon: Icons.lock_outline_rounded,

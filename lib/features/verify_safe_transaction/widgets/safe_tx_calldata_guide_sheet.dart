@@ -12,7 +12,7 @@ class SafeTxCalldataGuideSheet extends StatelessWidget {
         const Padding(
           padding: EdgeInsets.symmetric(horizontal: 16.0),
           child: Text(
-            'How to get transaction callldata ?',
+            'How to get transaction calldata?',
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
@@ -23,7 +23,7 @@ class SafeTxCalldataGuideSheet extends StatelessWidget {
         const Padding(
           padding: EdgeInsets.symmetric(horizontal: 16.0),
           child: Text(
-            'Follow these steps to get the transaction calldata data using your Safe wallet and you signing interface:',
+            'Follow these steps to get the transaction calldata using your Safe wallet and your signing interface:',
             style: TextStyle(
               fontSize: 16,
             ),
@@ -43,8 +43,8 @@ class SafeTxCalldataGuideSheet extends StatelessWidget {
             '1. Open your Safe wallet app\n'
             '2. Navigate to the transaction you want to execute\n'
             '3. Prompt to execute the transaction (you have to be the last signer)\n'
-            '3. Find the calldata on your signing interface as illustrated above\n'
-            '4. Copy the calldata and paste it here',
+            '4. Find the calldata on your signing interface as illustrated above\n'
+            '5. Copy the calldata and paste it here',
             style: TextStyle(
               fontSize: 14,
             ),

@@ -134,7 +134,7 @@ class _AccountAdditionFormScreenState extends State<AccountAdditionFormScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              'The on-chain contract version is $detectedVersion, '
+              'The onchain contract version is $detectedVersion, '
               'but you selected $selectedVersion. Using a mismatched '
               'version will yield incorrect simulation and verification '
               'results.',

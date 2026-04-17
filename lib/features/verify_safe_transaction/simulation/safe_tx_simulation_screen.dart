@@ -71,7 +71,7 @@ class _SafeTxSimulationScreenState extends State<SafeTxSimulationScreen> {
               ),
               const SizedBox(height: 16),
               Text(
-                'The transaction simulation failed, which may indicate that this transaction will revert when submitted on-chain.',
+                'The transaction simulation failed, which may indicate that this transaction will revert when submitted onchain.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 16,
@@ -163,12 +163,12 @@ class _SafeTxSimulationScreenState extends State<SafeTxSimulationScreen> {
                                 text: 'Transaction nonce (${widget.transaction.nonce}) ',
                                 style: TextStyle(fontWeight: FontWeight.bold),
                               ),
-                              TextSpan(text: 'differs from current on-chain nonce '),
+                              TextSpan(text: 'differs from current onchain nonce '),
                               TextSpan(
                                 text: '(${widget.transaction.latestNonce})',
                                 style: TextStyle(fontWeight: FontWeight.bold),
                               ),
-                              TextSpan(text: '. Simulation uses the current nonce to bypass on-chain checks.'),
+                              TextSpan(text: '. Simulation uses the current nonce to bypass onchain checks.'),
                             ],
                           ),
                           style: TextStyle(color: Colors.orange.shade900),
@@ -1039,11 +1039,11 @@ class _SafeTxSimulationScreenState extends State<SafeTxSimulationScreen> {
     }else if (warning.type == WarningTransactionType.MODULE_GUARD_CHANGE){
       title = "Changed module guard of your wallet";
       preDescription = "This will place this contract\n";
-      description = "\nas a module guard, that performs on-chain checks to approve any transaction initiated on your wallet by one of your enabled modules, only proceed with this transaction if you trust this module guard";
+      description = "\nas a module guard, that performs onchain checks to approve any transaction initiated on your wallet by one of your enabled modules, only proceed with this transaction if you trust this module guard";
     }else if (warning.type == WarningTransactionType.GUARD_CHANGE){
       title = "Changed transaction guard of your wallet";
       preDescription = "This will place this contract\n";
-      description = "\nas a transaction guard, that performs on-chain checks to approve any transaction initiated and signed by the owner(s), only proceed with this transaction if you trust this guard";
+      description = "\nas a transaction guard, that performs onchain checks to approve any transaction initiated and signed by the owner(s), only proceed with this transaction if you trust this guard";
     }else if (warning.type == WarningTransactionType.DELEGATE_CALL){
       title = "Delegate call detected";
       preDescription = "A delegated call was detected to this contract\n";

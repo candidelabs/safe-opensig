@@ -572,7 +572,7 @@ class _NonceDisplay extends StatelessWidget {
             ),
             const Spacer(),
             Text(
-              nonce?.toString() ?? '—',
+              nonce?.toString() ?? '-',
               style: Theme.of(context).textTheme.titleLarge,
             ),
           ],

@@ -764,7 +764,7 @@ class _NetworkConfigOverrideScreenState
                   Padding(
                     padding: const EdgeInsets.only(top: 4, left: 4, bottom: 4),
                     child: Text(
-                      'Will be discarded — chain ID mismatch or unreachable',
+                      'Will be discarded: chain ID mismatch or unreachable',
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: Colors.amber.shade700,
                         fontSize: 11,
@@ -775,7 +775,7 @@ class _NetworkConfigOverrideScreenState
                   Padding(
                     padding: const EdgeInsets.only(top: 4, left: 4, bottom: 4),
                     child: Text(
-                      'Does not support eth_getProof — required for state verification',
+                      'Does not support eth_getProof, which is required for state verification',
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: theme.colorScheme.error,
                         fontSize: 11,

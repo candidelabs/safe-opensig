@@ -50,7 +50,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             const SizedBox(height: ThemeConfig.spacingSmall),
             _SettingsTile(
               icon: Icons.info_outline,
-              title: 'About Safe Opensig',
+              title: 'About Safe OpenSig',
               trailing: _version.isNotEmpty
                   ? Text(
                       'v$_version',

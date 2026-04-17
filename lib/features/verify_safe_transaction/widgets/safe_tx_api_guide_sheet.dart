@@ -63,8 +63,9 @@ class SafeTxAPIGuideSheet extends StatelessWidget {
               title: 'Security considerations',
               content:
                 'Transaction data is fetched directly from the Safe Transaction Service API. '
-                'The app performs cryptographic verification and simulation to ensure the '
-                'transaction executes as expected before you sign it with your hardware wallet.',
+                'The app performs cryptographic verification and simulation to show you what the '
+                'transaction is expected to do before you sign it with your hardware wallet. '
+                'Actual execution onchain can still differ (see the MEV note on the simulation screen).',
               color: Colors.orange.shade700,
             ),
             const SizedBox(height: 32),
