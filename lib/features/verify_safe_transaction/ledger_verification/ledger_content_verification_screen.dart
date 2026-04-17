@@ -255,7 +255,7 @@ class _LedgerContentVerificationScreenState extends State<LedgerContentVerificat
                   padding: const EdgeInsets.all(8),
                   child: OutlinedButton(
                     onPressed: () => context.go('/accounts'),
-                    child: Text("Skip"),
+                    child: Text("Close"),
                   ),
                 ),
                 Spacer(),
