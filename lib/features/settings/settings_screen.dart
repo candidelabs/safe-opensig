@@ -163,7 +163,7 @@ class _AboutDialog extends StatelessWidget {
   static const _features = [
     ('Decode & verify Safe transactions before signing', Icons.verified_outlined),
     ('Simulate transactions with EVM tracing locally', Icons.play_circle_outline),
-    ('Multi-node state verification for trust minimization', Icons.hub_outlined),
+    ('Multi-node state verification, so no single RPC can mislead you', Icons.hub_outlined),
     ('Hardware wallet screen preview (Ledger)', Icons.security_outlined),
     ('13+ EVM chains supported', Icons.language),
     ('No data collection. Stored locally on device', Icons.lock_outline),

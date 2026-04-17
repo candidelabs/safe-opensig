@@ -347,7 +347,7 @@ class _HardwareWalletSelectionPage extends StatelessWidget {
                       Text("Why these settings?", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
                       SizedBox(height: 12),
                       Text(
-                        "These settings provide an optimal balance of security and UX when signing Safe transactions.\n\n"
+                        "These settings provide an optimal balance of security and usability when signing Safe transactions.\n\n"
                         "• Transaction Hash Display and Debug Contract Data allow you to verify domain and message hashes.\n\n"
                         "• Keeping EIP-712 Raw Messages disabled avoids review fatigue from overly verbose displays.",
                         style: TextStyle(fontSize: 14, height: 1.5),

@@ -284,7 +284,7 @@ class _TransactionHashesCardState extends State<_TransactionHashesCard> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       _HashDetailRow(
-                        label: 'Domain Hash',
+                        label: 'Domain hash',
                         value: domainHash,
                       ),
                       _HashDetailRow(
@@ -663,7 +663,7 @@ class _NonceControlState extends State<_NonceControl> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Transaction Nonce',
+              'Nonce',
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 12),

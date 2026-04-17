@@ -102,8 +102,8 @@ class _NetworkConfigOverrideScreenState
             ),
             title: const Text('Simulation Not Supported'),
             content: Text(
-              'This RPC node does not appear to support debug_traceCall, '
-              'which is required for transaction simulation.\n\n'
+              'This RPC node does not appear to support `debug_traceCall`, '
+              'the execution-trace method required for transaction simulation.\n\n'
               'You can still save this configuration, but simulation '
               'will not work with this node.',
               style: theme.textTheme.bodyMedium,
@@ -463,7 +463,8 @@ class _NetworkConfigOverrideScreenState
                       infoText:
                           'The primary node is used to fetch the state of the '
                           'blockchain before simulation. It must support '
-                          'debug_traceCall for transaction simulation to work.',
+                          '`debug_traceCall` (the execution-trace method) for '
+                          'transaction simulation to work.',
                     ),
                     const SizedBox(height: ThemeConfig.spacingSmall),
                     _buildPrimaryNodeField(theme),
@@ -472,10 +473,15 @@ class _NetworkConfigOverrideScreenState
                       theme,
                       'Secondary nodes (min. 1 required)',
                       infoText:
-                          'Secondary nodes are used to independently verify, '
-                          'through Merkle tree proofs, that the state fetched '
-                          'from the primary node is correct. The more secondary '
-                          'nodes you add, the stronger the verification.',
+                          'Secondary nodes cross-check the data the primary '
+                          'node returns, so a single node cannot lie to you. '
+                          'They only see a public block identifier. They do '
+                          'not see your transaction, your address, or your '
+                          'signature. The more secondary nodes you add, the '
+                          'stronger the guarantee.\n\n'
+                          'Technically: each secondary returns the block\'s '
+                          'state root (via eth_getBlockByNumber), which is '
+                          'used to verify the primary node\'s Merkle proofs.',
                     ),
                     const SizedBox(height: ThemeConfig.spacingSmall),
                     _buildSecondaryNodesSection(theme),

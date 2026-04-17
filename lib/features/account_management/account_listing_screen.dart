@@ -95,7 +95,7 @@ class _AccountListingScreenState extends State<AccountListingScreen> {
                 Padding(
                   padding: const EdgeInsets.only(bottom: ThemeConfig.spacingMedium),
                   child: Text(
-                    'Swipe or hold cards for options',
+                    'Swipe or long-press an account for options',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: Theme.of(context).textTheme.bodySmall?.color?.withValues(alpha: 0.5),
                     ),

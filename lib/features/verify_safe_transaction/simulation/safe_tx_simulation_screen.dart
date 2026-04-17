@@ -17,6 +17,7 @@ import 'package:safe_opensig/shared/models/simulation/token_transfer.dart';
 import 'package:safe_opensig/shared/models/simulation/warning_transaction.dart';
 import 'package:safe_opensig/shared/utils/utilities.dart';
 import 'package:safe_opensig/core/storage/network_config_box.dart';
+import 'package:safe_opensig/shared/widgets/mev_protection_note.dart';
 import 'package:safe_opensig/shared/widgets/trust_minimized_note.dart';
 import 'package:safe_opensig/shared/widgets/address_widget.dart';
 import 'package:safe_opensig/shared/widgets/hold_to_confirm_button.dart';
@@ -145,6 +146,8 @@ class _SafeTxSimulationScreenState extends State<SafeTxSimulationScreen> {
               TrustMinimizedNote(),
               const SizedBox(height: 16),
             ],
+            MevProtectionNote(),
+            const SizedBox(height: 16),
             if (widget.transaction.hasNonceMismatch) ...[
               Card(
                 color: Colors.orange.shade600.withAlpha((255*0.1).floor()),
@@ -883,7 +886,7 @@ class _SafeTxSimulationScreenState extends State<SafeTxSimulationScreen> {
         child: const Padding(
           padding: EdgeInsets.symmetric(vertical: 16.0),
           child: Text(
-            'No Safe settings changes detected\n(owners, and threshold changes)',
+            'No Safe settings changes detected\n(owners or threshold changes)',
             textAlign: TextAlign.center,
             style: TextStyle(color: Colors.grey),
           ),
@@ -999,7 +1002,7 @@ class _SafeTxSimulationScreenState extends State<SafeTxSimulationScreen> {
         child: const Padding(
           padding: EdgeInsets.symmetric(vertical: 16.0),
           child: Text(
-            'No warnings detected\n(allowances, safe modules, and safe guards changes)',
+            'No warnings detected\n(allowances, module changes, or guard changes)',
             textAlign: TextAlign.center,
             style: TextStyle(color: Colors.grey),
           ),
@@ -1046,8 +1049,8 @@ class _SafeTxSimulationScreenState extends State<SafeTxSimulationScreen> {
       description = "\nas a transaction guard, that performs onchain checks to approve any transaction initiated and signed by the owner(s), only proceed with this transaction if you trust this guard";
     }else if (warning.type == WarningTransactionType.DELEGATE_CALL){
       title = "Delegate call detected";
-      preDescription = "A delegated call was detected to this contract\n";
-      description = "\nwhich allows this contract to execute any operation on your behalf, only proceed if you trust and know what is the behavior of this contract";
+      preDescription = "A delegate call was detected to this contract\n";
+      description = "\nwhich means this contract will run code with your Safe's full permissions. Only proceed if you trust this contract and understand what its code does.";
     }
     return Container(
       margin: const EdgeInsets.only(bottom: 8, top: 8),
@@ -1115,7 +1118,7 @@ class _SafeTxSimulationScreenState extends State<SafeTxSimulationScreen> {
     final dangerousType = dangerousObject.$2;
     final dangerousData = dangerousObject.$3 as (EthereumAddress, EthereumAddress);
     if (dangerousType == DangerousTransactionType.SINGLETON_CHANGE) {
-      description = 'This transaction attempts to change the Safe singleton contract. This is extremely dangerous and should never be approved unless you explicitly opted in to upgrading your account’s contracts and are absolutely certain about the implications. The Safe contract is the core of your account security. If you are not completely sure about this action, abort the transaction immediately and consult the official Safe support channels before proceeding.';
+      description = 'This transaction attempts to change the Safe singleton, the core contract that runs your account. This is extremely dangerous and should never be approved unless you explicitly opted in to upgrading your account\'s contracts and are absolutely certain about the implications. The Safe contract is the core of your account security. If you are not completely sure about this action, abort the transaction immediately and consult the official Safe support channels before proceeding.';
     } else {
       description = 'This transaction has been identified as potentially dangerous. Please exercise extreme caution before proceeding. Do not approve unless you fully understand what this transaction does.';
     }

@@ -165,8 +165,8 @@ class _SafeTransactionFormScreenState extends State<SafeTransactionFormScreen> {
               children: [
                 Text(
                   'Your custom RPC node does not support '
-                  'debug_traceCall, which is required for '
-                  'transaction simulation.',
+                  '`debug_traceCall`, the execution-trace method '
+                  'required for transaction simulation.',
                   style: theme.textTheme.bodySmall,
                   textAlign: TextAlign.center,
                 ),
@@ -192,7 +192,7 @@ class _SafeTransactionFormScreenState extends State<SafeTransactionFormScreen> {
                   child: OutlinedButton.icon(
                     onPressed: () => Navigator.of(context).pop(_SimulationDialogResult.skipToHashes),
                     icon: const Icon(Icons.skip_next_rounded, size: 18),
-                    label: const Text('Skip to Hashes'),
+                    label: const Text('Skip Simulation'),
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 10),
                       side: BorderSide(color: theme.colorScheme.onSurface.withValues(alpha: 0.3)),
@@ -250,10 +250,9 @@ class _SafeTransactionFormScreenState extends State<SafeTransactionFormScreen> {
               children: [
                 Text(
                   'Your custom configuration has no secondary '
-                  'nodes. Without multiple independent nodes, '
-                  'state verification cannot cross-check data, '
-                  'reducing the trust assumptions of the '
-                  'simulation.',
+                  'nodes. Without them, the primary node\'s data '
+                  'cannot be cross-checked, so the simulation '
+                  'relies entirely on trusting a single node.',
                   style: theme.textTheme.bodySmall,
                   textAlign: TextAlign.center,
                 ),
@@ -406,7 +405,7 @@ class _SafeTransactionFormScreenState extends State<SafeTransactionFormScreen> {
                       if (currentIndex == 1) ...[
                         ElevatedButton(
                           onPressed: safeTransaction != null ? _onSubmit : null,
-                          child: const Text('Submit'),
+                          child: const Text('Verify'),
                         ),
                         const SizedBox(height: 16),
                       ],
@@ -604,7 +603,7 @@ class _SafeTransactionFormScreenState extends State<SafeTransactionFormScreen> {
                       style: manualInputSubIndex == 1 ? tabSelectedTextStyle : tabDeselectedTextStyle
                     ),
                     TextSpan(
-                      text: "\nCallData",
+                      text: "\nCalldata",
                       style: TextStyle(
                         color: manualInputSubIndex == 1
                           ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.6)

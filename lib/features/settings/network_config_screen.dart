@@ -132,7 +132,7 @@ class _NetworkConfigScreenState extends State<NetworkConfigScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'NETWORK CONFIGURATION',
+                      'Network Configuration',
                       style: theme.textTheme.labelSmall?.copyWith(
                         color: theme.textTheme.bodySmall?.color
                             ?.withValues(alpha: 0.5),
@@ -275,7 +275,7 @@ class _NetworkConfigScreenState extends State<NetworkConfigScreen> {
         ),
         const SizedBox(height: 14),
         Text(
-          'Multi-node consensus ensures trust-minimized state verification for every transaction',
+          'Multiple independent nodes cross-check every transaction, so no single node can mislead you.',
           textAlign: TextAlign.center,
           style: theme.textTheme.bodySmall?.copyWith(color: mutedColor),
         ),
