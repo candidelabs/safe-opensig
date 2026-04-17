@@ -14,6 +14,126 @@ class LedgerContentVerificationScreen extends StatefulWidget {
 class _LedgerContentVerificationScreenState extends State<LedgerContentVerificationScreen> {
   int currentLedgerPage = 0;
 
+  void _showZoomSheet(BuildContext context) async {
+    int zoomPage = currentLedgerPage;
+    await showDialog(
+      context: context,
+      barrierColor: Colors.black.withValues(alpha: 0.85),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setModalState) {
+          final page = widget.pages[zoomPage];
+          final canPrev = zoomPage > 0;
+          final canNext = zoomPage < widget.pages.length - 1;
+          return Dialog(
+            insetPadding: const EdgeInsets.all(20),
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () => Navigator.of(context).pop(),
+              child: Stack(
+                children: [
+                  Center(
+                    // Absorb taps on the content so taps on the black rectangle
+                    // or its controls do not dismiss the dialog.
+                    child: GestureDetector(
+                      onTap: () {},
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          AspectRatio(
+                            aspectRatio: 132 / 64,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: Colors.black,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: Colors.white.withValues(alpha: 0.15),
+                                  width: 1,
+                                ),
+                              ),
+                              child: Padding(
+                                padding: const EdgeInsets.all(10),
+                                child: FittedBox(
+                                  fit: BoxFit.contain,
+                                  alignment: Alignment.center,
+                                  child: SizedBox(
+                                    width: 132,
+                                    height: 64,
+                                    child: DefaultTextStyle(
+                                      style: const TextStyle(color: Colors.white),
+                                      child: IconTheme(
+                                        data: const IconThemeData(color: Colors.white),
+                                        child: Padding(
+                                          padding: const EdgeInsets.symmetric(vertical: 2),
+                                          child: Column(
+                                            children: [
+                                              for (var line in page.lines)
+                                                _LedgerLinePainter(line: line),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.chevron_left_rounded,
+                                    color: Colors.white, size: 32),
+                                onPressed: canPrev
+                                    ? () => setModalState(() => zoomPage--)
+                                    : null,
+                              ),
+                              const SizedBox(width: 12),
+                              Text(
+                                '${zoomPage + 1} / ${widget.pages.length}',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              IconButton(
+                                icon: const Icon(Icons.chevron_right_rounded,
+                                    color: Colors.white, size: 32),
+                                onPressed: canNext
+                                    ? () => setModalState(() => zoomPage++)
+                                    : null,
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    top: 0,
+                    right: 0,
+                    child: IconButton(
+                      icon: const Icon(Icons.close_rounded, color: Colors.white),
+                      onPressed: () => Navigator.of(context).pop(),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+    if (mounted && zoomPage != currentLedgerPage) {
+      setState(() => currentLedgerPage = zoomPage);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -58,38 +178,61 @@ class _LedgerContentVerificationScreenState extends State<LedgerContentVerificat
           SizedBox(height: 8),
           Card(
             elevation: 8,
-            child: Container(
-              margin: EdgeInsets.symmetric(horizontal: 5),
-              width: MediaQuery.of(context).size.width,
-              height: MediaQuery.of(context).size.height * 0.5,
-              child: Stack(
-                children: [
-                  Center(
-                    child: Image.asset("assets/hardware_wallets/ledger_nano_light.png")
-                  ),
-                  Positioned(
-                    top: 7,
-                    bottom: 0,
-                    right: 89.5,
-                    left: 0,
-                    child: Center(
-                      child: SizedBox(
-                        width: 132,
-                        height: 64,
-                        // color: Colors.white.withValues(alpha: 0.9),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 2),
-                          child: Column(
-                            children: [
-                              for (var line in widget.pages[currentLedgerPage].lines)
-                                _LedgerLinePainter(line: line),
-                            ],
+            clipBehavior: Clip.antiAlias,
+            child: InkWell(
+              onTap: () => _showZoomSheet(context),
+              child: Container(
+                margin: EdgeInsets.symmetric(horizontal: 5),
+                width: MediaQuery.of(context).size.width,
+                height: MediaQuery.of(context).size.height * 0.5,
+                child: Stack(
+                  children: [
+                    Center(
+                      child: Image.asset("assets/hardware_wallets/ledger_nano_light.png")
+                    ),
+                    Positioned(
+                      top: 7,
+                      bottom: 0,
+                      right: 89.5,
+                      left: 0,
+                      child: Center(
+                        child: SizedBox(
+                          width: 132,
+                          height: 64,
+                          // color: Colors.white.withValues(alpha: 0.9),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 2),
+                            child: Column(
+                              children: [
+                                for (var line in widget.pages[currentLedgerPage].lines)
+                                  _LedgerLinePainter(line: line),
+                              ],
+                            ),
                           ),
                         ),
                       ),
                     ),
-                  )
-                ],
+                    Positioned(
+                      top: 10,
+                      right: 10,
+                      child: Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context)
+                              .colorScheme
+                              .surface
+                              .withValues(alpha: 0.85),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.zoom_in_rounded,
+                          size: 18,
+                          color: Theme.of(context).colorScheme.onSurface,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
