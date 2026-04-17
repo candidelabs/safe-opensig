@@ -62,17 +62,21 @@ class SafeTransaction {
   }
 
   /// Ensures nonce is set by fetching it from the account if not already set
-  /// Also fetches and stores the latest nonce from the account for simulation
+  /// Also fetches and stores the latest nonce from the account for simulation.
+  /// Best-effort: never returns false. On fetch failure we leave latestNonce
+  /// null, and if nonce was unset we just mark it editable so the verify
+  /// screen prompts the user to enter one manually.
   Future<(bool, String)> ensureNonce(SafeAccount account) async {
     final fetchedNonce = await account.getNonce();
-    if (fetchedNonce == null) {
-      return (false, 'Failed to fetch nonce');
+    if (fetchedNonce != null) {
+      latestNonce = fetchedNonce;
+      if (nonce == null) {
+        nonce = fetchedNonce;
+        nonceIsEditable = true;
+      }
+      return (true, '');
     }
-    latestNonce = fetchedNonce;
-    // If nonce is not set (CallData input), use the latest nonce and mark it
-    // as editable so the verify screen lets the user adjust it.
     if (nonce == null) {
-      nonce = fetchedNonce;
       nonceIsEditable = true;
     }
     return (true, '');
@@ -149,7 +153,12 @@ class SafeTransaction {
       return (false, error);
     }
     // Use latestNonce for simulation, nonce for hash verification
-    final nonceToUse = useLatestNonce ? latestNonce! : nonce!;
+    final BigInt? nonceToUse = useLatestNonce ? latestNonce : nonce;
+    if (nonceToUse == null) {
+      return (false, useLatestNonce
+          ? 'Latest nonce unavailable'
+          : 'Nonce is not set');
+    }
     Uint8List message = encodeAbi(
         [
           "bytes32",

@@ -6,6 +6,8 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:safe_opensig/shared/models/safe_account_model.dart';
 import 'package:safe_opensig/shared/models/safe_transaction_model.dart';
+import 'package:safe_opensig/shared/widgets/missing_latest_nonce_banner.dart';
+import 'package:safe_opensig/shared/widgets/offline_capability_note.dart';
 
 class SafeHashesVerifyScreen extends StatefulWidget {
   final SafeAccount safeAccount;
@@ -31,7 +33,16 @@ class _SafeHashesVerifyScreenState extends State<SafeHashesVerifyScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Verify Transaction')),
+      appBar: AppBar(
+        title: const Text('Verify Transaction'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.airplanemode_active),
+            tooltip: 'Can work offline',
+            onPressed: () => showOfflineCapabilitySheet(context),
+          ),
+        ],
+      ),
       body: LayoutBuilder(
         builder: (context, constraints) {
           return SingleChildScrollView(
@@ -41,6 +52,8 @@ class _SafeHashesVerifyScreenState extends State<SafeHashesVerifyScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
+                    if (missingLatestNonceMessage(widget.safeTransaction) case final msg?)
+                      MissingLatestNonceBanner(message: msg),
                     if (widget.safeTransaction.nonceIsEditable)
                       _NonceControl(
                         initialValue: widget.safeTransaction.nonce,
@@ -71,12 +84,14 @@ class _SafeHashesVerifyScreenState extends State<SafeHashesVerifyScreen> {
                         ),
                         SizedBox(width: 4),
                         ElevatedButton(
-                          onPressed: () {
-                            GoRouter.of(context).push(
-                              "/verify-transaction/ledger",
-                              extra: (widget.safeAccount, widget.safeTransaction)
-                            );
-                          },
+                          onPressed: widget.safeTransaction.nonce == null
+                              ? null
+                              : () {
+                                  GoRouter.of(context).push(
+                                    "/verify-transaction/ledger",
+                                    extra: (widget.safeAccount, widget.safeTransaction)
+                                  );
+                                },
                           child: const Text('Verify Ledger Screens'),
                         ),
                       ],
@@ -228,10 +243,16 @@ class _TransactionHashesCardState extends State<_TransactionHashesCard> {
 
   @override
   Widget build(BuildContext context) {
-    widget.safeTransaction.calculateHashes(widget.safeAccount).then((result) {
-      if (!mounted) return;
-      setState(() => _hashes = result);
-    });
+    final hasNonce = widget.safeTransaction.nonce != null;
+    if (hasNonce) {
+      widget.safeTransaction.calculateHashes(widget.safeAccount).then((result) {
+        if (!mounted) return;
+        setState(() => _hashes = result);
+      });
+    } else {
+      // Reset so a prior calculation isn't shown while the user is editing
+      _hashes = null;
+    }
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16),
       child: Padding(
@@ -244,7 +265,14 @@ class _TransactionHashesCardState extends State<_TransactionHashesCard> {
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 12),
-            if (_hashes == null)
+            if (!hasNonce)
+              Text(
+                'Set a nonce above to calculate hashes.',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                ),
+              )
+            else if (_hashes == null)
               const Center(child: CircularProgressIndicator())
             else if (!_hashes!.$1)
               const Text('Failed to calculate hashes')
@@ -566,14 +594,17 @@ class _NonceControl extends StatefulWidget {
 }
 
 class _NonceControlState extends State<_NonceControl> {
-  late BigInt _nonce;
+  /// Null until the user commits a value. Offline + calldata can arrive here
+  /// without a starting nonce; we show a placeholder until the first tap so
+  /// the display doesn't contradict the "set it manually" banner.
+  BigInt? _nonce;
   Timer? _incrementTimer;
   Timer? _decrementTimer;
 
   @override
   void initState() {
     super.initState();
-    _nonce = widget.initialValue ?? BigInt.zero;
+    _nonce = widget.initialValue;
   }
 
   @override
@@ -586,7 +617,7 @@ class _NonceControlState extends State<_NonceControl> {
   void _startIncrementing() {
     _incrementTimer = Timer.periodic(const Duration(milliseconds: 150), (timer) {
       setState(() {
-        _nonce = _nonce + BigInt.one;
+        _nonce = (_nonce ?? BigInt.zero) + BigInt.one;
       });
     });
   }
@@ -594,9 +625,8 @@ class _NonceControlState extends State<_NonceControl> {
   void _startDecrementing() {
     _decrementTimer = Timer.periodic(const Duration(milliseconds: 150), (timer) {
       setState(() {
-        if (_nonce > BigInt.zero) {
-          _nonce = _nonce - BigInt.one;
-        }
+        final current = _nonce ?? BigInt.zero;
+        _nonce = current > BigInt.zero ? current - BigInt.one : BigInt.zero;
       });
     });
   }
@@ -604,23 +634,23 @@ class _NonceControlState extends State<_NonceControl> {
   void _stopChanging() {
     _incrementTimer?.cancel();
     _decrementTimer?.cancel();
-    widget.onChange(_nonce);
+    final value = _nonce;
+    if (value != null) widget.onChange(value);
   }
 
   void _incrementNonce() {
     setState(() {
-      _nonce = _nonce + BigInt.one;
+      _nonce = (_nonce ?? BigInt.zero) + BigInt.one;
     });
-    widget.onChange(_nonce);
+    widget.onChange(_nonce!);
   }
 
   void _decrementNonce() {
     setState(() {
-      if (_nonce > BigInt.zero) {
-        _nonce = _nonce - BigInt.one;
-      }
+      final current = _nonce ?? BigInt.zero;
+      _nonce = current > BigInt.zero ? current - BigInt.one : BigInt.zero;
     });
-    widget.onChange(_nonce);
+    widget.onChange(_nonce!);
   }
 
   @override
@@ -663,9 +693,9 @@ class _NonceControlState extends State<_NonceControl> {
                     fit: BoxFit.scaleDown,
                     child: Text.rich(
                       TextSpan(
-                        text: '$_nonce',
+                        text: _nonce == null ? '—' : '$_nonce',
                         children: [
-                          if (widget.latestNonce == _nonce)
+                          if (_nonce != null && widget.latestNonce == _nonce)
                             TextSpan(
                               text: "\nlatest",
                               style: TextStyle(

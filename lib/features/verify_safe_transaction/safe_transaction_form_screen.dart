@@ -79,12 +79,17 @@ class _SafeTransactionFormScreenState extends State<SafeTransactionFormScreen> {
 
   void _onSubmit() async {
     var cancelLoad = BotToast.showLoading();
-    final (success, error) = await safeTransaction!.ensureNonce(widget.safeAccount);
+    await safeTransaction!.ensureNonce(widget.safeAccount);
     cancelLoad();
     if (!mounted) return;
 
-    if (!success) {
-      BotToast.showText(text: error);
+    // If we still have no nonce (calldata path + offline), skip simulation
+    // and let the user set it manually on the hashes screen.
+    if (safeTransaction!.nonce == null) {
+      GoRouter.of(context).push(
+        "/verify-transaction/hashes",
+        extra: (widget.safeAccount, safeTransaction!),
+      );
       return;
     }
 

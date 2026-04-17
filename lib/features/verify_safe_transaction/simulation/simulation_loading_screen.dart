@@ -172,6 +172,16 @@ class _SimulationLoadingScreenState extends State<SimulationLoadingScreen> {
                 const SizedBox(height: 32),
                 ElevatedButton(
                   onPressed: () {
+                    GoRouter.of(context).pushReplacement(
+                      "/verify-transaction/hashes",
+                      extra: (widget.safeAccount, widget.transaction),
+                    );
+                  },
+                  child: const Text('Continue to Hashes'),
+                ),
+                const SizedBox(height: 8),
+                TextButton(
+                  onPressed: () {
                     GoRouter.of(context).pop();
                   },
                   child: const Text('Go Back'),

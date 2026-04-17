@@ -7,6 +7,7 @@ import 'package:safe_opensig/shared/models/hw_wallets/hw_content_generator.dart'
 import 'package:safe_opensig/shared/models/hw_wallets/ledger/ledger_nano_s_plus.dart';
 import 'package:safe_opensig/shared/models/safe_account_model.dart';
 import 'package:safe_opensig/shared/models/safe_transaction_model.dart';
+import 'package:safe_opensig/shared/widgets/offline_capability_note.dart';
 import 'package:version/version.dart';
 
 class SafeLedgerVerifyScreen extends StatefulWidget {
@@ -37,7 +38,14 @@ class _SafeLedgerVerifyScreenState extends State<SafeLedgerVerifyScreen> {
           icon: const Icon(Icons.arrow_back_outlined),
           onPressed: () => setState(() {previousPageIndex=1;currentPageIndex = 0;}),
         ),
-        title: const Text('Hardware Verification')
+        title: const Text('Hardware Verification'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.airplanemode_active),
+            tooltip: 'Can work offline',
+            onPressed: () => showOfflineCapabilitySheet(context),
+          ),
+        ],
       ),
       body: PageTransitionSwitcher(
         duration: const Duration(milliseconds: 500),
@@ -61,8 +69,38 @@ class _SafeLedgerVerifyScreenState extends State<SafeLedgerVerifyScreen> {
             widget.safeTransaction,
           ),
           builder: (BuildContext context, AsyncSnapshot snapshot) {
-            if (snapshot.connectionState != ConnectionState.done){
-              return CircularProgressIndicator();
+            if (snapshot.connectionState != ConnectionState.done) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            if (snapshot.hasError || snapshot.data == null) {
+              return Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.error_outline, size: 48),
+                    const SizedBox(height: 16),
+                    const Text(
+                      "Couldn't build the Ledger preview.",
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      '${snapshot.error ?? "Unknown error"}',
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                    const SizedBox(height: 24),
+                    OutlinedButton(
+                      onPressed: () => setState(() {
+                        previousPageIndex = 1;
+                        currentPageIndex = 0;
+                      }),
+                      child: const Text('Back'),
+                    ),
+                  ],
+                ),
+              );
             }
             return LedgerContentVerificationScreen(
               pages: snapshot.data,
@@ -74,18 +112,32 @@ class _SafeLedgerVerifyScreenState extends State<SafeLedgerVerifyScreen> {
   }
 
   Widget _hwSelectionPage(){
-    return Padding(
-      padding: EdgeInsets.all(16.0),
-      child: _HardwareWalletSelectionPage(
-        onProceed: (){
-          setState(() {
-            currentPageIndex = 1;
-          });
-        },
-        onSkip: (){
-          GoRouter.of(context).go("/accounts");
-        },
-      ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return SingleChildScrollView(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              minWidth: constraints.maxWidth,
+              minHeight: constraints.maxHeight,
+            ),
+            child: IntrinsicHeight(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: _HardwareWalletSelectionPage(
+                  onProceed: (){
+                    setState(() {
+                      currentPageIndex = 1;
+                    });
+                  },
+                  onSkip: (){
+                    GoRouter.of(context).go("/accounts");
+                  },
+                ),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -94,7 +146,10 @@ class _SafeLedgerVerifyScreenState extends State<SafeLedgerVerifyScreen> {
 class _HardwareWalletSelectionPage extends StatelessWidget {
   final VoidCallback onProceed;
   final VoidCallback onSkip;
-  const _HardwareWalletSelectionPage({required this.onProceed, required this.onSkip});
+  const _HardwareWalletSelectionPage({
+    required this.onProceed,
+    required this.onSkip,
+  });
 
   @override
   Widget build(BuildContext context) {

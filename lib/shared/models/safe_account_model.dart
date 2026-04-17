@@ -69,7 +69,7 @@ class SafeAccount with EquatableMixin {
       var response = await network.provider.callRaw(
           contract: EthereumAddress.fromHex(address),
           data: hexToBytes("0xaffed0e0")
-      );
+      ).timeout(const Duration(seconds: 5));
       return BigInt.parse(response);
     } catch (e) {
       return null;
