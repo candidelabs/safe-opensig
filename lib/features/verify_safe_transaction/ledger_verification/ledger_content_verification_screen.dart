@@ -24,11 +24,36 @@ class _LedgerContentVerificationScreenState extends State<LedgerContentVerificat
         mainAxisSize: MainAxisSize.max,
         children: [
           SizedBox(height: 8),
-          Row(
-            children: [
-              Icon(Icons.shield_outlined),
-              Text("Review on your Ledger device", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),)
-            ],
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.shield_outlined),
+                    SizedBox(width: 4),
+                    Text(
+                      "Review on your Ledger device",
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 6),
+                Text(
+                  'Every character must match your device. If anything differs, do not sign.',
+                  style: TextStyle(
+                    fontSize: 13,
+                    height: 1.35,
+                    color: Theme.of(context)
+                        .textTheme
+                        .bodySmall
+                        ?.color
+                        ?.withValues(alpha: 0.75),
+                  ),
+                ),
+              ],
+            ),
           ),
           SizedBox(height: 8),
           Card(
