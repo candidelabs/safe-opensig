@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:safe_opensig/core/theme/theme_config.dart';
+import 'package:safe_opensig/shared/widgets/disclaimer_content.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -59,6 +60,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     )
                   : null,
               onTap: () => _showAbout(context),
+            ),
+            const SizedBox(height: ThemeConfig.spacingSmall),
+            _SettingsTile(
+              icon: Icons.gavel_outlined,
+              title: 'Terms & Disclaimer',
+              trailing:
+                  Icon(Icons.chevron_right, size: 20, color: mutedColor),
+              onTap: () => DisclaimerContent.showAsSheet(context),
             ),
           ],
         ),

@@ -17,7 +17,7 @@ import 'package:safe_opensig/shared/models/simulation/token_transfer.dart';
 import 'package:safe_opensig/shared/models/simulation/warning_transaction.dart';
 import 'package:safe_opensig/shared/utils/utilities.dart';
 import 'package:safe_opensig/core/storage/network_config_box.dart';
-import 'package:safe_opensig/shared/widgets/mev_protection_note.dart';
+import 'package:safe_opensig/shared/widgets/simulation_scope_content.dart';
 import 'package:safe_opensig/shared/widgets/trust_minimized_note.dart';
 import 'package:safe_opensig/shared/widgets/address_widget.dart';
 import 'package:safe_opensig/shared/widgets/hold_to_confirm_button.dart';
@@ -48,6 +48,13 @@ class _SafeTxSimulationScreenState extends State<SafeTxSimulationScreen> {
           title: const Text('Transaction Simulation'),
           backgroundColor: Colors.transparent,
           elevation: 0,
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.info_outline),
+              tooltip: 'Simulation scope',
+              onPressed: () => SimulationScopeContent.showAsSheet(context),
+            ),
+          ],
         ),
         body: Padding(
           padding: const EdgeInsets.all(16.0),
@@ -135,6 +142,13 @@ class _SafeTxSimulationScreenState extends State<SafeTxSimulationScreen> {
         title: const Text('Transaction Simulation'),
         backgroundColor: Colors.transparent,
         elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.info_outline),
+            tooltip: 'Simulation scope',
+            onPressed: () => SimulationScopeContent.showAsSheet(context),
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
@@ -146,8 +160,6 @@ class _SafeTxSimulationScreenState extends State<SafeTxSimulationScreen> {
               TrustMinimizedNote(),
               const SizedBox(height: 16),
             ],
-            MevProtectionNote(),
-            const SizedBox(height: 16),
             if (widget.transaction.hasNonceMismatch) ...[
               Card(
                 color: Colors.orange.shade600.withAlpha((255*0.1).floor()),
@@ -230,17 +242,11 @@ class _SafeTxSimulationScreenState extends State<SafeTxSimulationScreen> {
   Widget _buildBalanceChangesCard(BuildContext context) {
     final transfers = widget.simulationResult.transfers;
     if (transfers.isEmpty) {
-      return _buildCard(
+      return _buildVerifiedRow(
         context,
-        title: 'Balance Changes',
         icon: Icons.account_balance_wallet,
-        child: const Padding(
-          padding: EdgeInsets.symmetric(vertical: 16.0),
-          child: Text(
-            'No balance changes detected',
-            style: TextStyle(color: Colors.grey),
-          ),
-        ),
+        title: 'Balance changes',
+        message: 'no token transfers',
       );
     }
 
@@ -343,17 +349,11 @@ class _SafeTxSimulationScreenState extends State<SafeTxSimulationScreen> {
   Widget _buildAllowancesCard(BuildContext context) {
     final allowances = widget.simulationResult.allowances;
     if (allowances.isEmpty) {
-      return _buildCard(
+      return _buildVerifiedRow(
         context,
-        title: 'Allowances',
         icon: Icons.shopping_bag,
-        child: const Padding(
-          padding: EdgeInsets.symmetric(vertical: 16.0),
-          child: Text(
-            'No allowances detected',
-            style: TextStyle(color: Colors.grey),
-          ),
-        ),
+        title: 'Token allowances',
+        message: 'no new grants or revocations',
       );
     }
 
@@ -879,18 +879,11 @@ class _SafeTxSimulationScreenState extends State<SafeTxSimulationScreen> {
   Widget _buildSafeSettingsChangesCard(BuildContext context) {
     final changes = widget.simulationResult.safeSettingsChanges;
     if (changes.isEmpty) {
-      return _buildCard(
+      return _buildVerifiedRow(
         context,
-        title: 'Safe Settings Changes',
         icon: Icons.settings,
-        child: const Padding(
-          padding: EdgeInsets.symmetric(vertical: 16.0),
-          child: Text(
-            'No Safe settings changes detected\n(owners or threshold changes)',
-            textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.grey),
-          ),
-        ),
+        title: 'Safe settings',
+        message: 'owners and threshold unchanged',
       );
     }
 
@@ -995,18 +988,11 @@ class _SafeTxSimulationScreenState extends State<SafeTxSimulationScreen> {
   Widget _buildWarningsCard(BuildContext context) {
     final warnings = widget.simulationResult.warningTransactions;
     if (warnings.isEmpty) {
-      return _buildCard(
+      return _buildVerifiedRow(
         context,
-        title: 'Warnings',
-        icon: Icons.warning,
-        child: const Padding(
-          padding: EdgeInsets.symmetric(vertical: 16.0),
-          child: Text(
-            'No warnings detected\n(allowances, module changes, or guard changes)',
-            textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.grey),
-          ),
-        ),
+        icon: Icons.shield_outlined,
+        title: 'Permission checks',
+        message: 'no module, guard, or delegate-call changes',
       );
     }
 
@@ -1249,6 +1235,62 @@ class _SafeTxSimulationScreenState extends State<SafeTxSimulationScreen> {
             ),
             const SizedBox(height: 12),
             child,
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Compact "checked and clean" row for sections with no findings.
+  /// Signals that the app actively verified the dimension, not that it
+  /// was skipped. Keeps the full-card visual language (primary-color
+  /// icon, full-contrast title) in a smaller footprint.
+  Widget _buildVerifiedRow(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required String message,
+  }) {
+    final theme = Theme.of(context);
+    final mutedColor =
+        theme.textTheme.bodySmall?.color?.withValues(alpha: 0.7);
+    return Card(
+      elevation: 1,
+      margin: EdgeInsets.zero,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        child: Row(
+          children: [
+            Icon(icon, size: 20, color: theme.primaryColor),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    title,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    message,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: mutedColor,
+                      height: 1.3,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            Icon(
+              Icons.check_circle_outline,
+              size: 18,
+              color: Colors.green[400],
+            ),
           ],
         ),
       ),
