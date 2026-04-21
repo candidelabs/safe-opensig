@@ -85,17 +85,19 @@ class SimulationScopeContent extends StatelessWidget {
       builder: (context) => SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Simulation scope',
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-              const SizedBox(height: 16),
-              const SimulationScopeContent(),
-            ],
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Simulation scope',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(height: 16),
+                const SimulationScopeContent(),
+              ],
+            ),
           ),
         ),
       ),
