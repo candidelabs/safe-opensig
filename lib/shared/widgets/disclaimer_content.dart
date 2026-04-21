@@ -2,10 +2,66 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-class DisclaimerContent extends StatelessWidget {
+class DisclaimerContent extends StatefulWidget {
   const DisclaimerContent({super.key});
 
   static const termsUrl = 'https://www.candide.dev/legal/tos';
+
+  static void showAsSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Terms & Disclaimer',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(height: 16),
+                const DisclaimerContent(),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  State<DisclaimerContent> createState() => _DisclaimerContentState();
+}
+
+class _DisclaimerContentState extends State<DisclaimerContent> {
+  late final TapGestureRecognizer _termsTapRecognizer;
+
+  @override
+  void initState() {
+    super.initState();
+    _termsTapRecognizer = TapGestureRecognizer()..onTap = _openTerms;
+  }
+
+  @override
+  void dispose() {
+    _termsTapRecognizer.dispose();
+    super.dispose();
+  }
+
+  Future<void> _openTerms() async {
+    final uri = Uri.parse(DisclaimerContent.termsUrl);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -48,49 +104,12 @@ class DisclaimerContent extends StatelessWidget {
                   color: theme.colorScheme.primary,
                   decoration: TextDecoration.underline,
                 ),
-                recognizer: TapGestureRecognizer()..onTap = _openTerms,
+                recognizer: _termsTapRecognizer,
               ),
             ],
           ),
         ),
       ],
-    );
-  }
-
-  static Future<void> _openTerms() async {
-    final uri = Uri.parse(termsUrl);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    }
-  }
-
-  static void showAsSheet(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      showDragHandle: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (context) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Terms & Disclaimer',
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-                const SizedBox(height: 16),
-                const DisclaimerContent(),
-              ],
-            ),
-          ),
-        ),
-      ),
     );
   }
 }
