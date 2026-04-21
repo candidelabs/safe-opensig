@@ -165,8 +165,9 @@ class _SafeTransactionFormScreenState extends State<SafeTransactionFormScreen> {
               children: [
                 Text(
                   'Your custom RPC node does not support '
-                  '`debug_traceCall`, the execution-trace method '
-                  'required for transaction simulation.',
+                  '`debug_traceCall`, which we use to fetch the state '
+                  'the transaction would touch. Simulation won\'t work '
+                  'without it.',
                   style: theme.textTheme.bodySmall,
                   textAlign: TextAlign.center,
                 ),

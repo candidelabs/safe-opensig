@@ -103,7 +103,8 @@ class _NetworkConfigOverrideScreenState
             title: const Text('Simulation Not Supported'),
             content: Text(
               'This RPC node does not appear to support `debug_traceCall`, '
-              'the execution-trace method required for transaction simulation.\n\n'
+              'which we use to fetch the state the transaction would touch. '
+              'Simulation won\'t work without it.\n\n'
               'You can still save this configuration, but simulation '
               'will not work with this node.',
               style: theme.textTheme.bodyMedium,
@@ -463,8 +464,8 @@ class _NetworkConfigOverrideScreenState
                       infoText:
                           'The primary node is used to fetch the state of the '
                           'blockchain before simulation. It must support '
-                          '`debug_traceCall` (the execution-trace method) for '
-                          'transaction simulation to work.',
+                          '`debug_traceCall`, which returns the state the '
+                          'transaction would touch.',
                     ),
                     const SizedBox(height: ThemeConfig.spacingSmall),
                     _buildPrimaryNodeField(theme),
