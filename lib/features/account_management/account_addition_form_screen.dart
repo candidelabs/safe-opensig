@@ -9,6 +9,7 @@ import 'package:safe_opensig/shared/constants/network_constants.dart';
 import 'package:safe_opensig/shared/constants/safe_singletons.dart';
 import 'package:safe_opensig/shared/models/network_model.dart';
 import 'package:safe_opensig/shared/models/safe_account_model.dart';
+import 'package:safe_opensig/shared/services/analytics_service.dart';
 import 'package:safe_opensig/shared/utils/abi_utils.dart';
 import 'package:safe_opensig/shared/widgets/address_input_field.dart';
 import 'package:safe_opensig/shared/widgets/network_logo.dart';
@@ -51,7 +52,10 @@ class _AccountAdditionFormScreenState extends State<AccountAdditionFormScreen> {
 
   bool get isEditing => widget.existingAccount != null;
 
-  Future<_SafeValidationResult> _validateSafeAccount(String address, Network network) async {
+  Future<_SafeValidationResult> _validateSafeAccount(
+    String address,
+    Network network,
+  ) async {
     // Step 1: On-chain check via eth_getStorageAt (slot 0 = singleton/masterCopy)
     try {
       final result = await network.provider.makeRPCCall(
@@ -92,6 +96,10 @@ class _AccountAdditionFormScreenState extends State<AccountAdditionFormScreen> {
         version: _selectedVersion!,
       );
       AccountsBox.addAccount(account);
+      Analytics.trackAccountAdded(
+        _selectedNetwork.value!.chainPrefix,
+        AccountsBox.getAccounts().length,
+      );
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Account added successfully!')),
       );
@@ -107,7 +115,10 @@ class _AccountAdditionFormScreenState extends State<AccountAdditionFormScreen> {
     return true;
   }
 
-  Future<bool> _showVersionMismatchDialog(String detectedVersion, String selectedVersion) async {
+  Future<bool> _showVersionMismatchDialog(
+    String detectedVersion,
+    String selectedVersion,
+  ) async {
     final theme = Theme.of(context);
     return await showDialog<bool>(
       context: context,
@@ -319,14 +330,14 @@ class _AccountAdditionFormScreenState extends State<AccountAdditionFormScreen> {
     try {
       response = await _selectedNetwork.value!.provider.callRaw(
         contract: EthereumAddress.fromHex(_addressController.text),
-        data: hexToBytes("0xffa1ad74")
+        data: hexToBytes("0xffa1ad74"),
       );
     } catch (e) {
       return;
     }
     if (response.replaceAll("0x", "").isEmpty) return;
     var version = decodeAbi(["string"], hexToBytes(response))[0];
-    if (_versions.contains(version)){
+    if (_versions.contains(version)) {
       _selectedVersion ??= version;
       _recommendedVersion = version;
       setState(() {});
@@ -352,20 +363,20 @@ class _AccountAdditionFormScreenState extends State<AccountAdditionFormScreen> {
     _selectedNetwork.addListener((){
       updateRecommendedVersion();
     });
-    _addressController.addListener((){
+    _addressController.addListener(() {
       var value = _addressController.text;
       if (_safeAddress == value) return;
       _safeAddress = value;
-      if (EthereumAddress.isEip55ValidEthereumAddress(value)){
+      if (EthereumAddress.isEip55ValidEthereumAddress(value)) {
         updateRecommendedVersion();
         return;
-      }else{
-        if (value.contains(":")){
+      } else {
+        if (value.contains(":")) {
           var prefix = value.split(":")[0];
           var address = value.split(":")[1];
-          if (EthereumAddress.isEip55ValidEthereumAddress(address)){
-            for (var network in availableNetworks.values){
-              if (network.chainPrefix == prefix){
+          if (EthereumAddress.isEip55ValidEthereumAddress(address)) {
+            for (var network in availableNetworks.values) {
+              if (network.chainPrefix == prefix) {
                 eventBus.fire(OnAddressNetworkDetected(network));
                 break;
               }
@@ -391,9 +402,7 @@ class _AccountAdditionFormScreenState extends State<AccountAdditionFormScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(isEditing ? 'Edit Account' : 'Add Account'),
-      ),
+      appBar: AppBar(title: Text(isEditing ? 'Edit Account' : 'Add Account')),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Form(

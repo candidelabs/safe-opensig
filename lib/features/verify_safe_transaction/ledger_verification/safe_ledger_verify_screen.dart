@@ -3,17 +3,23 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:safe_opensig/features/verify_safe_transaction/ledger_verification/ledger_content_verification_screen.dart';
+import 'package:safe_opensig/shared/constants/analytics_events.dart';
 import 'package:safe_opensig/shared/models/hw_wallets/hw_content_generator.dart';
 import 'package:safe_opensig/shared/models/hw_wallets/ledger/ledger_nano_s_plus.dart';
 import 'package:safe_opensig/shared/models/safe_account_model.dart';
 import 'package:safe_opensig/shared/models/safe_transaction_model.dart';
+import 'package:safe_opensig/shared/services/analytics_service.dart';
 import 'package:safe_opensig/shared/widgets/offline_capability_note.dart';
 import 'package:version/version.dart';
 
 class SafeLedgerVerifyScreen extends StatefulWidget {
   final SafeAccount safeAccount;
   final SafeTransaction safeTransaction;
-  const SafeLedgerVerifyScreen({super.key, required this.safeAccount, required this.safeTransaction});
+  const SafeLedgerVerifyScreen({
+    super.key,
+    required this.safeAccount,
+    required this.safeTransaction,
+  });
 
   @override
   State<SafeLedgerVerifyScreen> createState() => _SafeLedgerVerifyScreenState();
@@ -22,6 +28,7 @@ class SafeLedgerVerifyScreen extends StatefulWidget {
 class _SafeLedgerVerifyScreenState extends State<SafeLedgerVerifyScreen> {
   int currentPageIndex = 0;
   int previousPageIndex = 0;
+  bool _hwPreviewTracked = false;
   late HWContentGenerator contentGenerator;
 
   @override
@@ -111,7 +118,7 @@ class _SafeLedgerVerifyScreenState extends State<SafeLedgerVerifyScreen> {
     );
   }
 
-  Widget _hwSelectionPage(){
+  Widget _hwSelectionPage() {
     return LayoutBuilder(
       builder: (context, constraints) {
         return SingleChildScrollView(
@@ -124,12 +131,19 @@ class _SafeLedgerVerifyScreenState extends State<SafeLedgerVerifyScreen> {
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: _HardwareWalletSelectionPage(
-                  onProceed: (){
+                  onProceed: () {
+                    if (!_hwPreviewTracked) {
+                      _hwPreviewTracked = true;
+                      Analytics.trackHardwarePreviewViewed(
+                        widget.safeAccount.network.chainPrefix,
+                        AnalyticsDevices.ledgerNanoSPlus,
+                      );
+                    }
                     setState(() {
                       currentPageIndex = 1;
                     });
                   },
-                  onSkip: (){
+                  onSkip: () {
                     GoRouter.of(context).go("/accounts");
                   },
                 ),
@@ -140,7 +154,6 @@ class _SafeLedgerVerifyScreenState extends State<SafeLedgerVerifyScreen> {
       },
     );
   }
-
 }
 
 class _HardwareWalletSelectionPage extends StatelessWidget {
@@ -200,7 +213,7 @@ class _HardwareWalletSelectionPage extends StatelessWidget {
             ),
           ),
         ),
-        SizedBox(height: 16,),
+        SizedBox(height: 16),
         Row(
           children: [
             Icon(Icons.info_outline),
@@ -208,7 +221,7 @@ class _HardwareWalletSelectionPage extends StatelessWidget {
             Text("Ledger Version Info", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),)
           ],
         ),
-        SizedBox(height: 4,),
+        SizedBox(height: 4),
         Card(
           elevation: 4,
           child: Column(
@@ -236,7 +249,7 @@ class _HardwareWalletSelectionPage extends StatelessWidget {
             ],
           ),
         ),
-        SizedBox(height: 16,),
+        SizedBox(height: 16),
         Row(
           children: [
             Icon(Icons.settings),
@@ -244,7 +257,7 @@ class _HardwareWalletSelectionPage extends StatelessWidget {
             Text("Required Ledger Settings", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),)
           ],
         ),
-        SizedBox(height: 4,),
+        SizedBox(height: 4),
         Card(
           elevation: 4,
           child: Column(
@@ -328,7 +341,7 @@ class _HardwareWalletSelectionPage extends StatelessWidget {
             ],
           ),
         ),
-        SizedBox(height: 8,),
+        SizedBox(height: 8),
         Align(
           alignment: Alignment.centerRight,
           child: TextButton.icon(
@@ -373,9 +386,9 @@ class _HardwareWalletSelectionPage extends StatelessWidget {
           children: [
             OutlinedButton(
               onPressed: () => onSkip.call(),
-              child: const Text('Skip', style: TextStyle(color: Colors.white),),
+              child: const Text('Skip', style: TextStyle(color: Colors.white)),
             ),
-            SizedBox(width: 4,),
+            SizedBox(width: 4),
             ElevatedButton(
               onPressed: () => onProceed.call(),
               child: const Text('Proceed'),
@@ -386,4 +399,3 @@ class _HardwareWalletSelectionPage extends StatelessWidget {
     );
   }
 }
-

@@ -5,10 +5,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Development Commands
 
 ### Flutter Version Management
-This project uses Flutter version 3.32.4 managed by FVM (Flutter Version Management):
+This project uses Flutter version 3.32.4 managed by FVM (Flutter Version Management).
+**IMPORTANT**: Always invoke Flutter/Dart via the `.fvm/` relative path (e.g., `.fvm/flutter_sdk/bin/flutter`) instead of `fvm flutter`. This avoids issues with the `fvm` wrapper.
 ```bash
 # Install dependencies
-fvm flutter pub get
+.fvm/flutter_sdk/bin/flutter pub get
 
 # Run the app (requires .env file with RPC endpoints)
 fvm flutter run

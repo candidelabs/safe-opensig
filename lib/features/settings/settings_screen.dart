@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:safe_opensig/core/storage/misc_box.dart';
 import 'package:safe_opensig/core/theme/theme_config.dart';
+import 'package:safe_opensig/shared/services/analytics_service.dart';
 import 'package:safe_opensig/shared/widgets/disclaimer_content.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -28,8 +30,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final mutedColor =
-        theme.textTheme.bodySmall?.color?.withValues(alpha: 0.5);
+    final mutedColor = theme.textTheme.bodySmall?.color?.withValues(alpha: 0.5);
+    final analyticsOn = MiscBox.isAnalyticsOptedIn();
 
     return Scaffold(
       appBar: AppBar(
@@ -42,6 +44,30 @@ class _SettingsScreenState extends State<SettingsScreen> {
           children: [
             _NetworkConfigCard(theme: theme),
             const SizedBox(height: ThemeConfig.spacingSmall),
+            if (Analytics.isConfigured) ...[
+              _SettingsTile(
+                icon: Icons.insights_outlined,
+                title: 'Analytics',
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      analyticsOn ? 'On' : 'Off',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: mutedColor,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Icon(Icons.chevron_right, size: 20, color: mutedColor),
+                  ],
+                ),
+                onTap: () async {
+                  await context.push('/settings/analytics');
+                  if (mounted) setState(() {});
+                },
+              ),
+              const SizedBox(height: ThemeConfig.spacingSmall),
+            ],
             _SettingsTile(
               icon: Icons.description_outlined,
               title: 'Documentation',
@@ -55,8 +81,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
               trailing: _version.isNotEmpty
                   ? Text(
                       'v$_version',
-                      style:
-                          theme.textTheme.bodySmall?.copyWith(color: mutedColor),
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: mutedColor,
+                      ),
                     )
                   : null,
               onTap: () => _showAbout(context),
@@ -65,8 +92,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             _SettingsTile(
               icon: Icons.gavel_outlined,
               title: 'Terms & Disclaimer',
-              trailing:
-                  Icon(Icons.chevron_right, size: 20, color: mutedColor),
+              trailing: Icon(Icons.chevron_right, size: 20, color: mutedColor),
               onTap: () => DisclaimerContent.showAsSheet(context),
             ),
           ],
@@ -139,8 +165,9 @@ class _NetworkConfigCard extends StatelessWidget {
                     Text(
                       'Manage node endpoints and protocol RPCs',
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.textTheme.bodySmall?.color
-                            ?.withValues(alpha: 0.6),
+                        color: theme.textTheme.bodySmall?.color?.withValues(
+                          alpha: 0.6,
+                        ),
                       ),
                     ),
                   ],
@@ -149,8 +176,7 @@ class _NetworkConfigCard extends StatelessWidget {
               Icon(
                 Icons.chevron_right,
                 size: 20,
-                color: theme.textTheme.bodySmall?.color
-                    ?.withValues(alpha: 0.5),
+                color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.5),
               ),
             ],
           ),
@@ -175,7 +201,7 @@ class _AboutDialog extends StatelessWidget {
     ('Multi-node state verification, so no single RPC can mislead you', Icons.hub_outlined),
     ('Hardware wallet screen preview (Ledger)', Icons.security_outlined),
     ('13+ EVM chains supported', Icons.language),
-    ('No data collection. Stored locally on device', Icons.lock_outline),
+    ('Opt-in anonymous analytics, off by default', Icons.lock_outline),
   ];
 
   Future<void> _open(String url) async {
@@ -188,8 +214,7 @@ class _AboutDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final mutedColor =
-        theme.textTheme.bodySmall?.color?.withValues(alpha: 0.5);
+    final mutedColor = theme.textTheme.bodySmall?.color?.withValues(alpha: 0.5);
 
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -202,10 +227,7 @@ class _AboutDialog extends StatelessWidget {
             children: [
               Image.asset('assets/ic_logo.png', width: 56, height: 56),
               const SizedBox(height: 12),
-              Text(
-                'Safe OpenSig',
-                style: theme.textTheme.titleLarge,
-              ),
+              Text('Safe OpenSig', style: theme.textTheme.titleLarge),
               const SizedBox(height: 4),
               Text(
                 version.isNotEmpty ? 'v$version' : '',
@@ -216,35 +238,32 @@ class _AboutDialog extends StatelessWidget {
                 'Eliminate blind signing for Safe multisig transactions',
                 textAlign: TextAlign.center,
                 style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.textTheme.bodySmall?.color
-                      ?.withValues(alpha: 0.7),
+                  color: theme.textTheme.bodySmall?.color?.withValues(
+                    alpha: 0.7,
+                  ),
                 ),
               ),
               const SizedBox(height: 20),
               Align(
                 alignment: Alignment.centerLeft,
-                child: Text(
-                  'Features',
-                  style: theme.textTheme.titleSmall,
-                ),
+                child: Text('Features', style: theme.textTheme.titleSmall),
               ),
               const SizedBox(height: 8),
-              ..._features.map((f) => Padding(
-                    padding: const EdgeInsets.only(bottom: 6),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Icon(f.$2, size: 16, color: theme.colorScheme.primary),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Text(
-                            f.$1,
-                            style: theme.textTheme.bodySmall,
-                          ),
-                        ),
-                      ],
-                    ),
-                  )),
+              ..._features.map(
+                (f) => Padding(
+                  padding: const EdgeInsets.only(bottom: 6),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(f.$2, size: 16, color: theme.colorScheme.primary),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(f.$1, style: theme.textTheme.bodySmall),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
               const SizedBox(height: 16),
               Divider(height: 1, color: theme.dividerColor),
               const SizedBox(height: 14),
@@ -321,8 +340,7 @@ class _SocialButton extends StatelessWidget {
             Text(
               label,
               style: theme.textTheme.labelSmall?.copyWith(
-                color: theme.textTheme.bodySmall?.color
-                    ?.withValues(alpha: 0.7),
+                color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.7),
               ),
             ),
           ],

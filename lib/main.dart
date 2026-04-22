@@ -15,6 +15,7 @@ import 'package:safe_opensig/core/storage/network_config_box.dart';
 import 'package:safe_opensig/core/storage/theme_box.dart';
 import 'package:safe_opensig/shared/constants/event_bus.dart';
 import 'package:safe_opensig/shared/constants/network_constants.dart';
+import 'package:safe_opensig/shared/services/analytics_service.dart';
 import 'package:safe_opensig/core/theme/app_theme.dart';
 import 'package:window_manager/window_manager.dart';
 
@@ -35,6 +36,8 @@ void main() async {
     NetworkConfigBox.init(),
   ]);
   await HiveMigrationRunner.needsMigration();
+
+  await Analytics.init();
 
   rebuildEffectiveNetworks();
   eventBus.on<OnNodeConfigChange>().listen((_) => rebuildEffectiveNetworks());
@@ -85,11 +88,10 @@ class MyApp extends StatelessWidget {
             ),
           );
         }
-        return botToastBuilder(context, SafeArea(
-          bottom: true,
-          top: false,
-          child: child!
-        ));
+        return botToastBuilder(
+          context,
+          SafeArea(bottom: true, top: false, child: child!),
+        );
       },
     );
   }

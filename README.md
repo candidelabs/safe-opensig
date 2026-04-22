@@ -35,6 +35,10 @@ Safe OpenSig is a mobile app for Safe multisig signers. It eliminates blind sign
 4. **Verify hashes** match between the simulation and your hardware wallet
 5. **Sign with confidence** knowing exactly what you're approving
 
+## Privacy & Analytics
+
+Safe OpenSig is privacy-first. Analytics are **opt-in and off by default**. When enabled, the app sends a small set of anonymous behavioural events, no wallet addresses, no transaction hashes, no calldata, no amounts, no RPC URLs. Every event is documented in [docs/analytics.md](docs/analytics.md). You can self-host the analytics backend; see that doc. To build without analytics entirely, leave `APTABASE_APP_KEY` blank in your `.env`.
+
 ## Getting Started
 
 ### Prerequisites

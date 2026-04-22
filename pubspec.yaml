@@ -45,12 +45,18 @@ dependencies:
   hex: 0.2.0
   package_info_plus: 9.0.0
   path_provider: 2.1.5
+  aptabase_flutter: 0.4.1
   # Rust Bridge
   revm_tracer:
     git:
       url: https://github.com/candidelabs/revm-tracer
       ref: e454043b8f1ff2251884fef9e1cf1510f1f438f1
   url_launcher: 6.3.2
+
+dependency_overrides:
+  # aptabase_flutter 0.4.1 pins package_info_plus ^8.0.0, but the app uses 9.0.0.
+  # The PackageInfo.fromPlatform() API is stable across 8.x/9.x, so this override is safe.
+  package_info_plus: 9.0.0
 
 dev_dependencies:
   flutter_test:

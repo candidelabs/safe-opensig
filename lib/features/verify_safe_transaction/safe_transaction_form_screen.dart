@@ -13,8 +13,10 @@ import 'package:safe_opensig/features/verify_safe_transaction/widgets/safe_tx_ca
 import 'package:safe_opensig/features/verify_safe_transaction/widgets/safe_tx_json_guide_sheet.dart';
 import 'package:safe_opensig/features/verify_safe_transaction/widgets/safe_tx_json_input.dart';
 import 'package:safe_opensig/core/storage/network_config_box.dart';
+import 'package:safe_opensig/shared/constants/analytics_events.dart';
 import 'package:safe_opensig/shared/models/safe_account_model.dart';
 import 'package:safe_opensig/shared/models/safe_transaction_model.dart';
+import 'package:safe_opensig/shared/services/analytics_service.dart';
 import 'package:safe_opensig/shared/utils/utilities.dart';
 import 'package:version/version.dart';
 
@@ -62,6 +64,12 @@ class _SafeTransactionFormScreenState extends State<SafeTransactionFormScreen> {
 
   bool get isLegacyJson => Version.parse(widget.safeAccount.version) < Version.parse("1.0.0");
 
+  String _currentInputMethod() {
+    if (currentIndex == 0) return AnalyticsInputMethods.safeApi;
+    if (manualInputSubIndex == 0) return AnalyticsInputMethods.json;
+    return AnalyticsInputMethods.calldata;
+  }
+
   @override
   void initState() {
     var navigatorContext = router.configuration.navigatorKey.currentContext!;
@@ -78,6 +86,10 @@ class _SafeTransactionFormScreenState extends State<SafeTransactionFormScreen> {
   }
 
   void _onSubmit() async {
+    Analytics.trackVerificationStarted(
+      widget.safeAccount.network.chainPrefix,
+      _currentInputMethod(),
+    );
     var cancelLoad = BotToast.showLoading();
     await safeTransaction!.ensureNonce(widget.safeAccount);
     cancelLoad();
@@ -421,7 +433,7 @@ class _SafeTransactionFormScreenState extends State<SafeTransactionFormScreen> {
     );
   }
 
-  Widget safeTxJsonTab(){
+  Widget safeTxJsonTab() {
     return Container(
       key: ValueKey<int>(manualInputSubIndex),
       child: Column(
@@ -431,7 +443,7 @@ class _SafeTransactionFormScreenState extends State<SafeTransactionFormScreen> {
             focusNode: _jsonFocusNode,
             hintText: _jsonInputHint,
             legacyJson: isLegacyJson,
-            onValidInput: (safeTx){
+            onValidInput: (safeTx) {
               setState(() => safeTransaction = safeTx);
             },
           ),
@@ -469,7 +481,7 @@ class _SafeTransactionFormScreenState extends State<SafeTransactionFormScreen> {
     );
   }
 
-  Widget safeTxCalldataTab(){
+  Widget safeTxCalldataTab() {
     return Container(
       key: ValueKey<int>(manualInputSubIndex),
       child: Column(
@@ -479,7 +491,7 @@ class _SafeTransactionFormScreenState extends State<SafeTransactionFormScreen> {
             focusNode: _callDataFocusNode,
             hintText: _callDataInputHint,
             legacyJson: isLegacyJson,
-            onValidInput: (safeTx){
+            onValidInput: (safeTx) {
               setState(() => safeTransaction = safeTx);
             },
           ),
@@ -517,14 +529,14 @@ class _SafeTransactionFormScreenState extends State<SafeTransactionFormScreen> {
     );
   }
 
-  Widget safeTxApiTab(){
+  Widget safeTxApiTab() {
     return Container(
       key: ValueKey<int>(currentIndex),
       child: Column(
         children: [
           SafeTxAPIInput(
             safeAccount: widget.safeAccount,
-            onValidInput: (safeTx){
+            onValidInput: (safeTx) {
               setState(() => safeTransaction = safeTx);
               _onSubmit();
             },
@@ -563,7 +575,7 @@ class _SafeTransactionFormScreenState extends State<SafeTransactionFormScreen> {
     );
   }
 
-  Widget manualInputTab(){
+  Widget manualInputTab() {
     return Container(
       key: ValueKey<int>(currentIndex),
       child: Column(
