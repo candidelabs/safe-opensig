@@ -1,7 +1,4 @@
-import 'dart:io';
-
 import 'package:bot_toast/bot_toast.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -16,6 +13,7 @@ import 'package:safe_opensig/core/storage/theme_box.dart';
 import 'package:safe_opensig/shared/constants/event_bus.dart';
 import 'package:safe_opensig/shared/constants/network_constants.dart';
 import 'package:safe_opensig/shared/services/analytics_service.dart';
+import 'package:safe_opensig/shared/utils/platform_helper.dart' as platform;
 import 'package:safe_opensig/core/theme/app_theme.dart';
 import 'package:window_manager/window_manager.dart';
 
@@ -43,7 +41,7 @@ void main() async {
   eventBus.on<OnNodeConfigChange>().listen((_) => rebuildEffectiveNetworks());
 
   // Initialize platform-specific features
-  if (!kIsWeb && Platform.isWindows) {
+  if (platform.isWindows) {
     await windowManager.ensureInitialized();
     WindowOptions windowOptions = const WindowOptions(
       size: Size(360, 800),
@@ -68,7 +66,7 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    var isMobile = Platform.isAndroid || Platform.isIOS;
+    var isMobile = platform.isMobile;
     var isDarkMode = true; // todo ThemeBox.isDarkMode();
     return MaterialApp.router(
       title: 'Safe OpenSig',

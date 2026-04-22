@@ -12,25 +12,25 @@ This project uses Flutter version 3.32.4 managed by FVM (Flutter Version Managem
 .fvm/flutter_sdk/bin/flutter pub get
 
 # Run the app (requires .env file with RPC endpoints)
-fvm flutter run
+.fvm/flutter_sdk/bin/flutter run
 
 # Code generation (for Hive adapters and Riverpod providers)
-fvm flutter packages pub run build_runner build
+.fvm/flutter_sdk/bin/flutter packages pub run build_runner build
 
 # Run code analysis
-fvm flutter analyze
+.fvm/flutter_sdk/bin/flutter analyze
 
 # Format code
-fvm dart format .
+.fvm/flutter_sdk/bin/dart format .
 
 # Run tests
-fvm flutter test
+.fvm/flutter_sdk/bin/flutter test
 ```
 
 ### Code Generation
 The project uses code generation for Hive adapters and Riverpod providers. When modifying models or providers, run:
 ```bash
-fvm flutter packages pub run build_runner build --delete-conflicting-outputs
+.fvm/flutter_sdk/bin/flutter packages pub run build_runner build --delete-conflicting-outputs
 ```
 
 ### Environment Variables

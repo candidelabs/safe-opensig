@@ -1,10 +1,9 @@
-import 'dart:io';
-
 import 'package:aptabase_flutter/aptabase_flutter.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:safe_opensig/core/storage/misc_box.dart';
 import 'package:safe_opensig/shared/constants/analytics_events.dart';
+import 'package:safe_opensig/shared/utils/platform_helper.dart';
 
 /// Single entry point for analytics in Safe OpenSig.
 ///
@@ -102,7 +101,7 @@ class Analytics {
   // ---- Typed trackers — the ONLY public event surface ----
 
   static void trackAppLaunched() => _track(AnalyticsEvents.appLaunched, {
-    AnalyticsProps.platform: _platformString(),
+    AnalyticsProps.platform: getPlatformString(),
   });
 
   static void trackOnboardingCompleted() =>
@@ -156,15 +155,5 @@ class Analytics {
       return;
     }
     Aptabase.instance.trackEvent(name, props);
-  }
-
-  static String _platformString() {
-    if (kIsWeb) return 'web';
-    if (Platform.isAndroid) return 'android';
-    if (Platform.isIOS) return 'ios';
-    if (Platform.isWindows) return 'windows';
-    if (Platform.isMacOS) return 'macos';
-    if (Platform.isLinux) return 'linux';
-    return 'unknown';
   }
 }
