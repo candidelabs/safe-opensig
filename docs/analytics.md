@@ -74,6 +74,7 @@ Fired after a Safe account is deleted (via swipe or long-press menu, including t
 
 | Property | Type | Example |
 |---|---|---|
+| `chain_slug` | string | `eth` |
 | `account_count_after` | int | `2` |
 
 ### `verification_started`
@@ -127,15 +128,6 @@ You can self-host the Aptabase backend — source at [aptabase/aptabase](https:/
 
 If `APTABASE_HOST` is blank with an `A-SH-...` key, the SDK logs an error and analytics stays disabled — no fallback to any public host.
 
-## Using the Aptabase cloud instead
-
-1. Create an account at [aptabase.com](https://aptabase.com) and create an app (region `EU` or `US`).
-2. In `.env`:
-   ```
-   APTABASE_APP_KEY=A-EU-xxxxxxxxxx
-   # APTABASE_HOST not needed
-   ```
-
 ## Building without analytics
 
 Leave `APTABASE_APP_KEY` blank in `.env`. `Analytics.init()` returns early, no SDK network activity occurs, every typed helper is a no-op. No code changes required.
@@ -146,4 +138,4 @@ Leave `APTABASE_APP_KEY` blank in `.env`. `Analytics.init()` returns early, no S
 
 Per-install identity in Aptabase is a random UUID generated client-side by the SDK on first launch and stored in local app storage. It is never tied to a wallet address or email. Deleting the app wipes it. The `sessionId` attached to every event is a short-lived string that rotates after an hour of inactivity.
 
-The Aptabase SDK also attaches a small `systemProps` object to every event containing `osName`, `osVersion`, `locale`, `appVersion`, `appBuildNumber`, and a `sdkVersion` tag. None of these identify the user. Full details: the SDK source is in `~/.pub-cache/hosted/pub.dev/aptabase_flutter-*/lib/aptabase_flutter.dart`.
+The Aptabase SDK also attaches a small `systemProps` object to every event containing `osName`, `osVersion`, `locale`, `appVersion`, `appBuildNumber`, and a `sdkVersion` tag. None of these identify the user. Full details: the SDK source is in `https://github.com/aptabase/aptabase_flutter`.

@@ -95,10 +95,11 @@ class _AccountAdditionFormScreenState extends State<AccountAdditionFormScreen> {
         chainId: _selectedNetwork.value!.chainId,
         version: _selectedVersion!,
       );
+      final countAfter = AccountsBox.getAccounts().length + 1;
       AccountsBox.addAccount(account);
       Analytics.trackAccountAdded(
         _selectedNetwork.value!.chainPrefix,
-        AccountsBox.getAccounts().length,
+        countAfter,
       );
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Account added successfully!')),

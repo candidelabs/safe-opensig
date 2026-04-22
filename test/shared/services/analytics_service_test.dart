@@ -35,7 +35,7 @@ void main() {
       Analytics.trackAppLaunched();
       Analytics.trackOnboardingCompleted();
       Analytics.trackAccountAdded('eth', 1);
-      Analytics.trackAccountRemoved(0);
+      Analytics.trackAccountRemoved('eth', 0);
       Analytics.trackVerificationStarted('eth', AnalyticsInputMethods.json);
       Analytics.trackSimulationCompleted(
         'eth',
@@ -82,10 +82,13 @@ void main() {
       });
     });
 
-    test('trackAccountRemoved carries account_count_after', () {
-      Analytics.trackAccountRemoved(7);
+    test('trackAccountRemoved carries chain_slug + account_count_after', () {
+      Analytics.trackAccountRemoved('base', 7);
       expect(captured.single.name, AnalyticsEvents.accountRemoved);
-      expect(captured.single.props, {AnalyticsProps.accountCountAfter: 7});
+      expect(captured.single.props, {
+        AnalyticsProps.chainSlug: 'base',
+        AnalyticsProps.accountCountAfter: 7,
+      });
     });
 
     test('trackVerificationStarted carries chain_slug + input_method', () {

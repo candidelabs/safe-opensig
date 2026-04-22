@@ -126,9 +126,11 @@ class _AccountListingScreenState extends State<AccountListingScreen> {
                                 ).go('/accounts/edit-account', extra: account);
                               },
                               onDelete: () {
+                                final countAfter = AccountsBox.getAccounts().length - 1;
                                 AccountsBox.removeAccount(account.id);
                                 Analytics.trackAccountRemoved(
-                                  AccountsBox.getAccounts().length,
+                                  account.network.chainPrefix,
+                                  countAfter,
                                 );
                                 _loadAccounts();
                               },

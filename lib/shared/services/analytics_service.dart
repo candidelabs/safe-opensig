@@ -114,10 +114,11 @@ class Analytics {
         AnalyticsProps.accountCountAfter: accountCountAfter,
       });
 
-  static void trackAccountRemoved(int accountCountAfter) => _track(
-    AnalyticsEvents.accountRemoved,
-    {AnalyticsProps.accountCountAfter: accountCountAfter},
-  );
+  static void trackAccountRemoved(String chainSlug, int accountCountAfter) =>
+      _track(AnalyticsEvents.accountRemoved, {
+        AnalyticsProps.chainSlug: chainSlug,
+        AnalyticsProps.accountCountAfter: accountCountAfter,
+      });
 
   static void trackVerificationStarted(String chainSlug, String inputMethod) =>
       _track(AnalyticsEvents.verificationStarted, {
