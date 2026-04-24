@@ -321,23 +321,10 @@ class _SafeTransactionFormScreenState extends State<SafeTransactionFormScreen> {
         _NoSecondaryNodesResult.goBack;
   }
 
-  void _openJsonGuide() {
+  void _openGuideSheet(Widget sheet) {
     showModalBottomSheet(
       context: context,
-      builder: (context) => const SafeTxJsonGuideSheet(),
-      isScrollControlled: true,
-      showDragHandle: true,
-      useSafeArea: true,
-      shape: RoundedRectangleBorder(
-        borderRadius: ThemeConfig.borderRadiusLarge,
-      ),
-    );
-  }
-
-  void _openCalldataGuide() {
-    showModalBottomSheet(
-      context: context,
-      builder: (context) => const SafeTxCalldataGuideSheet(),
+      builder: (_) => sheet,
       isScrollControlled: true,
       showDragHandle: true,
       useSafeArea: true,
@@ -478,7 +465,7 @@ class _SafeTransactionFormScreenState extends State<SafeTransactionFormScreen> {
           SizedBox(
             width: double.infinity,
             child: OutlinedButton.icon(
-              onPressed: _openJsonGuide,
+              onPressed: () => _openGuideSheet(const SafeTxJsonGuideSheet()),
               icon: const Icon(Icons.help_outline_rounded, size: 18),
               label: const Text('See where to find this in Safe{Wallet}'),
               style: OutlinedButton.styleFrom(
@@ -513,7 +500,7 @@ class _SafeTransactionFormScreenState extends State<SafeTransactionFormScreen> {
           SizedBox(
             width: double.infinity,
             child: OutlinedButton.icon(
-              onPressed: _openCalldataGuide,
+              onPressed: () => _openGuideSheet(const SafeTxCalldataGuideSheet()),
               icon: const Icon(Icons.help_outline_rounded, size: 18),
               label: const Text('See where to find this in Safe{Wallet}'),
               style: OutlinedButton.styleFrom(

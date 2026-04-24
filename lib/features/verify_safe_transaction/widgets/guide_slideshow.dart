@@ -159,7 +159,9 @@ class _SlideBody extends StatelessWidget {
         Expanded(
           child: slide.assetName != null
               ? _ZoomableGuideImage(assetName: slide.assetName!)
-              : _CompletionBlock(icon: slide.completionIcon ?? Icons.check_circle_rounded),
+              : slide.completionIcon != null
+                  ? _CompletionBlock(icon: slide.completionIcon!)
+                  : const SizedBox.shrink(),
         ),
       ],
     );
