@@ -1,65 +1,67 @@
 import 'package:flutter/material.dart';
+import 'package:safe_opensig/features/verify_safe_transaction/widgets/guide_slideshow.dart';
 
 class SafeTxJsonGuideSheet extends StatelessWidget {
   const SafeTxJsonGuideSheet({super.key});
 
+  static const _slides = <GuideSlide>[
+    GuideSlide(
+      index: 1,
+      text: 'Create a new transaction',
+      assetName: 'guide_json_1_create.png',
+    ),
+    GuideSlide(
+      index: 2,
+      text: 'Confirm the transaction.',
+      assetName: 'guide_json_2_confirm.png',
+    ),
+    GuideSlide(
+      index: 3,
+      text: 'On the Review details screen, click the JSON tab and copy '
+          'the transaction.',
+      assetName: 'guide_json_3_review.png',
+    ),
+    GuideSlide(
+      index: 4,
+      text: 'Send the JSON from your desktop to your phone, using an '
+          'encrypted method (for example, Signal), then paste it into '
+          'OpenSig to verify.',
+    ),
+  ];
+
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16.0),
-          child: Text(
-            'How to get transaction data?',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
+    final theme = Theme.of(context);
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'How to get the Transaction JSON',
+            style: theme.textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.w700,
             ),
           ),
-        ),
-        const SizedBox(height: 16,),
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16.0),
-          child: Text(
-            'Follow these steps to get the transaction data from your Safe wallet:',
-            style: TextStyle(
-              fontSize: 16,
+          const SizedBox(height: 4),
+          Text(
+            'From Safe{Wallet} at app.safe.global.',
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
             ),
           ),
-        ),
-        const SizedBox(height: 16),
-        Center(
-          child: Image.network(
-            'https://placehold.co/600x400/gif?text=Placeholder',
-            fit: BoxFit.contain,
-          ),
-        ),
-        const SizedBox(height: 16),
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16.0),
-          child: Text(
-            '1. Open your Safe wallet app\n'
-            '2. Navigate to the transaction you want to verify\n'
-            '3. Find the JSON data field as illustrated above\n'
-            '4. Copy the JSON data and paste it here',
-            style: TextStyle(
-              fontSize: 14,
+          const SizedBox(height: 16),
+          const GuideSlideshow(slides: _slides),
+          const SizedBox(height: 16),
+          Center(
+            child: ElevatedButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Got it'),
             ),
           ),
-        ),
-        const SizedBox(height: 24),
-        Center(
-          child: ElevatedButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-            },
-            child: const Text('Got it'),
-          ),
-        ),
-        const SizedBox(height: 16),
-      ],
+        ],
+      ),
     );
   }
 }

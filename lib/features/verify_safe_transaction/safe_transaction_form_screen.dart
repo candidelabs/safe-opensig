@@ -321,6 +321,32 @@ class _SafeTransactionFormScreenState extends State<SafeTransactionFormScreen> {
         _NoSecondaryNodesResult.goBack;
   }
 
+  void _openJsonGuide() {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => const SafeTxJsonGuideSheet(),
+      isScrollControlled: true,
+      showDragHandle: true,
+      useSafeArea: true,
+      shape: RoundedRectangleBorder(
+        borderRadius: ThemeConfig.borderRadiusLarge,
+      ),
+    );
+  }
+
+  void _openCalldataGuide() {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => const SafeTxCalldataGuideSheet(),
+      isScrollControlled: true,
+      showDragHandle: true,
+      useSafeArea: true,
+      shape: RoundedRectangleBorder(
+        borderRadius: ThemeConfig.borderRadiusLarge,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -437,6 +463,7 @@ class _SafeTransactionFormScreenState extends State<SafeTransactionFormScreen> {
     return Container(
       key: ValueKey<int>(manualInputSubIndex),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           SafeTxJsonInput(
             controller: _jsonController,
@@ -447,32 +474,18 @@ class _SafeTransactionFormScreenState extends State<SafeTransactionFormScreen> {
               setState(() => safeTransaction = safeTx);
             },
           ),
-          const SizedBox(height: 10),
-          Container(
-            alignment: Alignment.centerRight,
-            child: OutlinedButton(
-              onPressed: () {
-                showModalBottomSheet(
-                  context: context,
-                  builder: (context) => const SafeTxJsonGuideSheet(),
-                  isScrollControlled: true,
-                  showDragHandle: true,
-                  useSafeArea: true,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: ThemeConfig.borderRadiusLarge,
-                  )
-                );
-              },
-              style: ButtonStyle(
-                  padding: WidgetStatePropertyAll(EdgeInsets.symmetric(horizontal: 10, vertical: 4)),
-                  visualDensity: VisualDensity.compact,
-                  shape: WidgetStatePropertyAll(RoundedRectangleBorder(
-                    borderRadius: ThemeConfig.borderRadiusSmall
-                  ))
-              ),
-              child: Text(
-                '💡 How to get this data',
-                style: ThemeConfig.textTheme.bodySmall,
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: _openJsonGuide,
+              icon: const Icon(Icons.help_outline_rounded, size: 18),
+              label: const Text('See where to find this in Safe{Wallet}'),
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                shape: RoundedRectangleBorder(
+                  borderRadius: ThemeConfig.borderRadiusSmall,
+                ),
               ),
             ),
           ),
@@ -485,6 +498,7 @@ class _SafeTransactionFormScreenState extends State<SafeTransactionFormScreen> {
     return Container(
       key: ValueKey<int>(manualInputSubIndex),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           SafeTxCalldataInput(
             controller: _callDataController,
@@ -495,32 +509,18 @@ class _SafeTransactionFormScreenState extends State<SafeTransactionFormScreen> {
               setState(() => safeTransaction = safeTx);
             },
           ),
-          const SizedBox(height: 10),
-          Container(
-            alignment: Alignment.centerRight,
-            child: OutlinedButton(
-              onPressed: () {
-                showModalBottomSheet(
-                  context: context,
-                  builder: (context) => const SafeTxCalldataGuideSheet(),
-                  isScrollControlled: true,
-                  showDragHandle: true,
-                  useSafeArea: true,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: ThemeConfig.borderRadiusLarge,
-                  )
-                );
-              },
-              style: ButtonStyle(
-                  padding: WidgetStatePropertyAll(EdgeInsets.symmetric(horizontal: 10, vertical: 4)),
-                  visualDensity: VisualDensity.compact,
-                  shape: WidgetStatePropertyAll(RoundedRectangleBorder(
-                    borderRadius: ThemeConfig.borderRadiusSmall
-                  ))
-              ),
-              child: Text(
-                '💡 How to get this data',
-                style: ThemeConfig.textTheme.bodySmall,
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: _openCalldataGuide,
+              icon: const Icon(Icons.help_outline_rounded, size: 18),
+              label: const Text('See where to find this in Safe{Wallet}'),
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                shape: RoundedRectangleBorder(
+                  borderRadius: ThemeConfig.borderRadiusSmall,
+                ),
               ),
             ),
           ),
