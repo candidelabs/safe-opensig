@@ -69,6 +69,7 @@ flutter:
     - assets/
     - assets/networks/
     - assets/hardware_wallets/
+    - assets/images/guides/
   # https://flutter.dev/to/resolution-aware-images
   # fonts:
   #   - family: Schyler

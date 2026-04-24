@@ -115,3 +115,5 @@ auth.json
 .cache/claudia/
 .cache/gemini/
 .cache/qwen/
+# Git worktrees
+.worktrees/
