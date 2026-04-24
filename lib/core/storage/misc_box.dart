@@ -10,6 +10,7 @@ class MiscBox {
   static const String schemaVersionKey = 'key:$boxName:storage:schema-version';
   static const String _analyticsOptedInKey = 'key:$boxName:analytics:opted-in';
   static const String _analyticsNudgeShownKey = 'key:$boxName:analytics:nudge-shown';
+  static const String _firstVerificationCompletedKey = 'key:$boxName:verification:first-completed';
 
   static Future<void> init() async {
     _box = await Hive.openBox(boxName);
@@ -63,5 +64,13 @@ class MiscBox {
 
   static bool isAnalyticsNudgeShown() {
     return _box.get(_analyticsNudgeShownKey, defaultValue: false);
+  }
+
+  static Future<void> markFirstVerificationCompleted() async {
+    await _box.put(_firstVerificationCompletedKey, true);
+  }
+
+  static bool hasCompletedFirstVerification() {
+    return _box.get(_firstVerificationCompletedKey, defaultValue: false);
   }
 }

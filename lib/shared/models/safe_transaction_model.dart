@@ -1,7 +1,9 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:safe_opensig/core/storage/misc_box.dart';
 import 'package:safe_opensig/shared/constants/analytics_events.dart';
+import 'package:safe_opensig/shared/constants/event_bus.dart';
 import 'package:safe_opensig/shared/constants/safe_hashes.dart';
 import 'package:safe_opensig/shared/models/safe_account_model.dart';
 import 'package:safe_opensig/shared/models/simulation/evm_tracer.dart';
@@ -337,6 +339,10 @@ class SafeTransaction {
         AnalyticsSimulationOutcomes.success,
         simStopwatch.elapsedMilliseconds,
       );
+      if (!MiscBox.hasCompletedFirstVerification()) {
+        await MiscBox.markFirstVerificationCompleted();
+        eventBus.fire(const OnFirstVerificationCompleted());
+      }
       return (true, simulationResult, "");
     } catch (e) {
       print(e);

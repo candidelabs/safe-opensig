@@ -40,7 +40,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       title: 'Your Privacy',
       description:
           'Your Safe accounts are saved locally on this device. '
-          'Anonymous usage analytics are off by default, '
+          'Anonymous usage data is off by default, '
           'you can opt in from Settings to help improve the app.',
     ),
   ];

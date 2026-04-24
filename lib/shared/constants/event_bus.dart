@@ -7,6 +7,10 @@ class OnAccountStorageChange {
   const OnAccountStorageChange();
 }
 
+class OnFirstVerificationCompleted {
+  const OnFirstVerificationCompleted();
+}
+
 class OnAddressNetworkDetected {
   final Network network;
   const OnAddressNetworkDetected(this.network);

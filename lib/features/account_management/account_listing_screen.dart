@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:safe_opensig/core/storage/accounts_box.dart';
@@ -8,10 +9,10 @@ import 'package:safe_opensig/core/theme/theme_config.dart';
 import 'package:safe_opensig/shared/constants/event_bus.dart';
 import 'package:safe_opensig/shared/models/safe_account_model.dart';
 import 'package:safe_opensig/shared/services/analytics_service.dart';
+import 'package:safe_opensig/shared/widgets/analytics_info_sheet.dart';
 import 'package:safe_opensig/shared/widgets/network_logo.dart';
 import 'package:safe_opensig/shared/widgets/address_widget.dart';
 import 'package:safe_opensig/shared/widgets/popular_safes_section.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class AccountListingScreen extends StatefulWidget {
   const AccountListingScreen({super.key});
@@ -21,22 +22,33 @@ class AccountListingScreen extends StatefulWidget {
 }
 
 class _AccountListingScreenState extends State<AccountListingScreen> {
-  static const _analyticsDocsUrl =
-      'https://github.com/candidelabs/safe-opensig/blob/main/docs/analytics.md';
-
   late List<SafeAccount> _accounts;
   late StreamSubscription _accountChangesSubscription;
+  late StreamSubscription _firstVerificationSubscription;
   bool _showAnalyticsNudge = false;
 
   @override
   void initState() {
     _loadAccounts();
-    _showAnalyticsNudge = Analytics.isConfigured && !MiscBox.isAnalyticsNudgeShown() && !MiscBox.isAnalyticsOptedIn();
+    _recomputeAnalyticsNudge();
     _accountChangesSubscription = eventBus.on<OnAccountStorageChange>().listen((event) {
       if (!mounted) return;
       _loadAccounts();
     });
+    _firstVerificationSubscription = eventBus.on<OnFirstVerificationCompleted>().listen((event) {
+      if (!mounted) return;
+      _recomputeAnalyticsNudge();
+    });
     super.initState();
+  }
+
+  void _recomputeAnalyticsNudge() {
+    final shouldShow = Analytics.isConfigured &&
+        !MiscBox.isAnalyticsNudgeShown() &&
+        !MiscBox.isAnalyticsOptedIn() &&
+        MiscBox.hasCompletedFirstVerification();
+    if (shouldShow == _showAnalyticsNudge) return;
+    setState(() => _showAnalyticsNudge = shouldShow);
   }
 
   Future<void> _enableAnalyticsFromNudge() async {
@@ -51,16 +63,14 @@ class _AccountListingScreenState extends State<AccountListingScreen> {
     if (mounted) setState(() => _showAnalyticsNudge = false);
   }
 
-  Future<void> _openAnalyticsDocs() async {
-    final uri = Uri.parse(_analyticsDocsUrl);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    }
+  void _openAnalyticsDocs() {
+    AnalyticsInfoSheet.show(context);
   }
 
   @override
   void dispose() {
     _accountChangesSubscription.cancel();
+    _firstVerificationSubscription.cancel();
     super.dispose();
   }
 
@@ -157,7 +167,7 @@ class _AccountListingScreenState extends State<AccountListingScreen> {
   }
 }
 
-class _AnalyticsNudgeCard extends StatelessWidget {
+class _AnalyticsNudgeCard extends StatefulWidget {
   final VoidCallback onEnable;
   final VoidCallback onDismiss;
   final VoidCallback onLearnMore;
@@ -167,6 +177,25 @@ class _AnalyticsNudgeCard extends StatelessWidget {
     required this.onDismiss,
     required this.onLearnMore,
   });
+
+  @override
+  State<_AnalyticsNudgeCard> createState() => _AnalyticsNudgeCardState();
+}
+
+class _AnalyticsNudgeCardState extends State<_AnalyticsNudgeCard> {
+  late final TapGestureRecognizer _learnMoreRecognizer;
+
+  @override
+  void initState() {
+    super.initState();
+    _learnMoreRecognizer = TapGestureRecognizer()..onTap = widget.onLearnMore;
+  }
+
+  @override
+  void dispose() {
+    _learnMoreRecognizer.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -215,7 +244,7 @@ class _AnalyticsNudgeCard extends StatelessWidget {
                       ),
                     ),
                     tooltip: 'Dismiss',
-                    onPressed: onDismiss,
+                    onPressed: widget.onDismiss,
                     visualDensity: VisualDensity.compact,
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(),
@@ -225,42 +254,50 @@ class _AnalyticsNudgeCard extends StatelessWidget {
               const SizedBox(height: 4),
               Padding(
                 padding: const EdgeInsets.only(right: 8),
-                child: Text(
-                  'Send anonymous app-usage events. No wallet data, no addresses. Change anytime in Settings.',
-                  style: theme.textTheme.bodySmall,
+                child: Text.rich(
+                  TextSpan(
+                    style: theme.textTheme.bodySmall,
+                    children: [
+                      const TextSpan(
+                        text:
+                            'Send anonymous app-usage events. No wallet data, no addresses. Change anytime in Settings. ',
+                      ),
+                      TextSpan(
+                        text: 'See what\'s collected',
+                        style: TextStyle(
+                          color: theme.colorScheme.primary,
+                          decoration: TextDecoration.underline,
+                        ),
+                        recognizer: _learnMoreRecognizer,
+                      ),
+                      const TextSpan(text: '.'),
+                    ],
+                  ),
                 ),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 12),
               Row(
                 children: [
-                  TextButton(
-                    onPressed: onLearnMore,
-                    style: TextButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
-                      visualDensity: VisualDensity.compact,
-                    ),
-                    child: const Text('Learn more'),
-                  ),
-                  const Spacer(),
-                  TextButton(
-                    onPressed: onDismiss,
-                    style: TextButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
-                      visualDensity: VisualDensity.compact,
-                    ),
-                    child: const Text('Not now'),
-                  ),
-                  const SizedBox(width: 4),
-                  FilledButton(
-                    onPressed: onEnable,
-                    style: FilledButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 6,
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: widget.onDismiss,
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 6),
+                        visualDensity: VisualDensity.compact,
                       ),
-                      visualDensity: VisualDensity.compact,
+                      child: const Text('No thanks'),
                     ),
-                    child: const Text('Enable'),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: FilledButton.tonal(
+                      onPressed: widget.onEnable,
+                      style: FilledButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 6),
+                        visualDensity: VisualDensity.compact,
+                      ),
+                      child: const Text('Enable'),
+                    ),
                   ),
                 ],
               ),

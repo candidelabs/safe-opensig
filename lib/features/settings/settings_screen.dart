@@ -47,7 +47,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             if (Analytics.isConfigured) ...[
               _SettingsTile(
                 icon: Icons.insights_outlined,
-                title: 'Analytics',
+                title: 'Usage data',
                 trailing: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -201,7 +201,7 @@ class _AboutDialog extends StatelessWidget {
     ('Multi-node state verification, so no single RPC can mislead you', Icons.hub_outlined),
     ('Hardware wallet screen preview (Ledger)', Icons.security_outlined),
     ('13+ EVM chains supported', Icons.language),
-    ('Opt-in anonymous analytics, off by default', Icons.lock_outline),
+    ('Opt-in anonymous usage data, off by default', Icons.lock_outline),
   ];
 
   Future<void> _open(String url) async {

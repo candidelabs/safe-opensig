@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:safe_opensig/core/storage/misc_box.dart';
 import 'package:safe_opensig/core/theme/theme_config.dart';
 import 'package:safe_opensig/shared/services/analytics_service.dart';
+import 'package:safe_opensig/shared/widgets/analytics_info_sheet.dart';
 import 'package:safe_opensig/shared/widgets/m2_switch.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class AnalyticsSettingsScreen extends StatefulWidget {
   const AnalyticsSettingsScreen({super.key});
@@ -14,9 +14,6 @@ class AnalyticsSettingsScreen extends StatefulWidget {
 }
 
 class _AnalyticsSettingsScreenState extends State<AnalyticsSettingsScreen> {
-  static const _docsUrl =
-      'https://github.com/candidelabs/safe-opensig/blob/main/docs/analytics.md';
-
   bool _enabled = MiscBox.isAnalyticsOptedIn();
 
   Future<void> _onToggle(bool value) async {
@@ -25,11 +22,8 @@ class _AnalyticsSettingsScreenState extends State<AnalyticsSettingsScreen> {
     Analytics.setEnabled(value);
   }
 
-  Future<void> _openDocs() async {
-    final uri = Uri.parse(_docsUrl);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    }
+  void _openDocs() {
+    AnalyticsInfoSheet.show(context);
   }
 
   @override
@@ -40,7 +34,7 @@ class _AnalyticsSettingsScreenState extends State<AnalyticsSettingsScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Analytics'),
+        title: const Text('Usage data'),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(ThemeConfig.spacingMedium),
@@ -124,7 +118,7 @@ class _AnalyticsSettingsScreenState extends State<AnalyticsSettingsScreen> {
                           ),
                         ),
                       ),
-                      Icon(Icons.open_in_new, size: 18, color: dimColor),
+                      Icon(Icons.chevron_right, size: 20, color: dimColor),
                     ],
                   ),
                 ),
