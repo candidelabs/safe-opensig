@@ -145,7 +145,8 @@ class _SafeTxAPIInputState extends State<SafeTxAPIInput> {
   }
 
   Widget _buildEmptyState() {
-    return Center(
+    final theme = Theme.of(context);
+    return SingleChildScrollView(
       child: Padding(
         padding: const EdgeInsets.all(24.0),
         child: Column(
@@ -159,23 +160,29 @@ class _SafeTxAPIInputState extends State<SafeTxAPIInput> {
             const SizedBox(height: 16),
             Text(
               'No queued transactions found',
-              style: Theme.of(context).textTheme.titleMedium,
+              style: theme.textTheme.titleMedium,
+              textAlign: TextAlign.center,
             ),
             const SizedBox(height: 8),
             Text(
-              'Create a transaction in your Safe wallet to see it here.',
+              'Transactions show up here once an owner or a proposer '
+              'signs one in Safe{Wallet} at app.safe.global. That first '
+              'signature puts it in the queue.',
               textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Colors.grey.shade600,
-                  ),
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: Colors.grey.shade600,
+              ),
             ),
-            const SizedBox(height: 24),
-            OutlinedButton.icon(
+            const SizedBox(height: 20),
+            const _ProposeExplainer(),
+            const SizedBox(height: 12),
+            TextButton.icon(
               onPressed: _fetchTransactions,
-              icon: const Icon(Icons.refresh),
+              icon: const Icon(Icons.refresh, size: 18),
               label: const Text('Refresh'),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: Theme.of(context).primaryColor,
+              style: TextButton.styleFrom(
+                foregroundColor: theme.colorScheme.primary,
+                textStyle: theme.textTheme.bodySmall,
               ),
             ),
           ],
@@ -183,6 +190,7 @@ class _SafeTxAPIInputState extends State<SafeTxAPIInput> {
       ),
     );
   }
+
 
   /// Groups transactions by nonce for conflict detection
   Map<BigInt, List<SafeAPITransaction>> _groupByNonce(List<SafeAPITransaction> transactions) {
@@ -309,4 +317,69 @@ class _SafeTxAPIInputState extends State<SafeTxAPIInput> {
     );
   }
 
+}
+
+class _ProposeExplainer extends StatefulWidget {
+  const _ProposeExplainer();
+
+  @override
+  State<_ProposeExplainer> createState() => _ProposeExplainerState();
+}
+
+class _ProposeExplainerState extends State<_ProposeExplainer> {
+  bool _expanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: theme.colorScheme.onSurface.withValues(alpha: 0.12),
+        ),
+      ),
+      child: Column(
+        children: [
+          InkWell(
+            onTap: () => setState(() => _expanded = !_expanded),
+            borderRadius: BorderRadius.circular(10),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Are you the first Signer?',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  Icon(
+                    _expanded
+                        ? Icons.keyboard_arrow_up_rounded
+                        : Icons.keyboard_arrow_down_rounded,
+                    size: 20,
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          if (_expanded)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+              child: Text(
+                "If you're the first signer, you can \"propose\" it "
+                'in Safe{Wallet} (it shows up here for everyone who needs to '
+                'sign) or use the Manual Input tab to paste the '
+                'transaction into OpenSig directly.',
+                style: theme.textTheme.bodySmall,
+              ),
+            ),
+        ],
+      ),
+    );
+  }
 }
