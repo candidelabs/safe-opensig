@@ -3,7 +3,6 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:hive_ce_flutter/hive_flutter.dart';
-import 'package:media_kit/media_kit.dart';
 import 'package:safe_opensig/core/router/app_router.dart';
 import 'package:safe_opensig/core/storage/accounts_box.dart';
 import 'package:safe_opensig/core/storage/migrations/migration_runner.dart';
@@ -21,7 +20,6 @@ final botToastBuilder = BotToastInit();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  MediaKit.ensureInitialized();
 
   await dotenv.load(fileName: ".env");
   await Hive.initFlutter();

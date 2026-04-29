@@ -1,10 +1,6 @@
-import 'dart:async';
-
 import 'package:dotted_line/dotted_line.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:media_kit/media_kit.dart';
-import 'package:media_kit_video/media_kit_video.dart';
 import 'package:safe_opensig/shared/constants/constants.dart';
 import 'package:safe_opensig/shared/models/safe_account_model.dart';
 import 'package:safe_opensig/shared/models/safe_transaction_model.dart';
@@ -1307,135 +1303,39 @@ class _SafeTxSimulationScreenState extends State<SafeTxSimulationScreen> {
           color: Colors.grey[800],
           borderRadius: BorderRadius.circular(8),
         ),
-        child: imageURI != null && imageURI.isNotEmpty
-          ? _NFTMediaPlayer(
-              mediaUrl: imageURI,
-              size: size,
-            )
-          : Icon(
-              Icons.image_not_supported,
-              size: size * 0.6,
-              color: Colors.grey[600],
-            ),
+        child: _buildNFTImageContent(imageURI, size),
       ),
     );
   }
 
-}
-
-class _NFTMediaPlayer extends StatefulWidget {
-  final String mediaUrl;
-  final double size;
-
-  const _NFTMediaPlayer({
-    required this.mediaUrl,
-    required this.size,
-  });
-
-  @override
-  State<_NFTMediaPlayer> createState() => _NFTMediaPlayerState();
-}
-
-class _NFTMediaPlayerState extends State<_NFTMediaPlayer> {
-  Player? _player;
-  VideoController? _videoController;
-  bool _isVideo = false;
-  bool _videoInitialized = false;
-  bool _checkingVideo = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _attemptVideoInitialization();
-  }
-
-  Future<void> _attemptVideoInitialization() async {
-    try {
-      _player = Player();
-      _videoController = VideoController(_player!);
-
-      // Set a timeout for video initialization
-      await _player!.open(Media(widget.mediaUrl)).timeout(
-        const Duration(seconds: 5),
-        onTimeout: () {
-          throw TimeoutException('Video initialization timeout');
-        },
-      );
-
-      // Wait a bit for the video to buffer and check if it's valid
-      await Future.delayed(const Duration(milliseconds: 500));
-
-      if (mounted && _player != null) {
-        setState(() {
-          _isVideo = true;
-          _videoInitialized = true;
-          _checkingVideo = false;
-          // Configure video playback like a GIF
-          _player!.setPlaylistMode(PlaylistMode.loop);
-          _player!.setVolume(0.0); // Muted like GIFs
-          _player!.play();
-        });
-      }
-    } catch (e) {
-      // If video initialization fails, fall back to image
-      if (mounted) {
-        setState(() {
-          _isVideo = false;
-          _checkingVideo = false;
-        });
-      }
-      _player?.dispose();
-      _player = null;
-      _videoController = null;
-    }
-  }
-
-  @override
-  void dispose() {
-    _player?.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    // While checking if it's a video, show loading
-    if (_checkingVideo) {
-      return Center(
-        child: SizedBox(
-          width: widget.size * 0.5,
-          height: widget.size * 0.5,
-          child: CircularProgressIndicator(
-            strokeWidth: 2,
-          ),
-        ),
+  Widget _buildNFTImageContent(String? imageURI, double size) {
+    if (imageURI == null || imageURI.isEmpty) {
+      return Icon(
+        Icons.image_not_supported,
+        size: size * 0.6,
+        color: Colors.grey[600],
       );
     }
 
-    // If it's a video and initialized, show video player
-    if (_isVideo && _videoInitialized && _videoController != null) {
-      return SizedBox(
-        width: widget.size,
-        height: widget.size,
-        child: Video(
-          controller: _videoController!,
-          fit: BoxFit.cover,
-          controls: NoVideoControls,
-        ),
+    if (_isVideoUrl(imageURI)) {
+      return Icon(
+        Icons.movie_outlined,
+        size: size * 0.6,
+        color: Colors.grey[600],
       );
     }
 
-    // Fall back to image
     return Image.network(
-      widget.mediaUrl,
-      width: widget.size,
-      height: widget.size,
+      imageURI,
+      width: size,
+      height: size,
       fit: BoxFit.cover,
       loadingBuilder: (context, child, loadingProgress) {
         if (loadingProgress == null) return child;
         return Center(
           child: SizedBox(
-            width: widget.size * 0.5,
-            height: widget.size * 0.5,
+            width: size * 0.5,
+            height: size * 0.5,
             child: CircularProgressIndicator(
               strokeWidth: 2,
               value: loadingProgress.expectedTotalBytes != null
@@ -1448,11 +1348,20 @@ class _NFTMediaPlayerState extends State<_NFTMediaPlayer> {
       errorBuilder: (context, error, stackTrace) {
         return Icon(
           Icons.broken_image,
-          size: widget.size * 0.6,
+          size: size * 0.6,
           color: Colors.grey[600],
         );
       },
     );
   }
+
+  bool _isVideoUrl(String url) {
+    final path = url.split('?').first.split('#').first.toLowerCase();
+    return path.endsWith('.mp4') ||
+        path.endsWith('.webm') ||
+        path.endsWith('.mov') ||
+        path.endsWith('.m4v');
+  }
+
 }
 
