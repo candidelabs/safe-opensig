@@ -6,6 +6,45 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+## [1.1.3]
+
+### Added
+- Opt-in usage analytics via self-hostable Aptabase backend, default off; typed event schema with no addresses, hashes, calldata, amounts, or RPC URLs (#73)
+- Settings → Usage data sub-screen with toggle and "View what gets collected" sheet (#73, #74)
+- One-time consent banner on Accounts screen, gated on first completed verification (#73, #74)
+- Manual Input guides redesigned as slideshows with annotated screenshots and full-screen pinch-zoom viewer (#75)
+- Safe API empty state: clarifying subtitle and "Are you the first Signer?" collapsible explainer (#75)
+- Tap-to-zoom on Ledger emulation page preview with prev/next navigation inside the modal (#69)
+- "Every character must match" caveat under Ledger emulation title (#69)
+- Terms & Disclaimer tile in Settings opening a dedicated disclaimer sheet (#68)
+- Simulation Scope explainer (what we check + MEV note) reachable from an info icon on the simulation results AppBar (#68)
+- "Continue to Hashes" path on simulation error screen so offline failures no longer dead-end the flow (#61)
+- Banner on hashes screen when the latest onchain nonce couldn't be fetched, prompting manual confirmation (#61)
+- `docs/analytics.md` documenting event schema, non-collection list, and self-hosting (#73)
+
+### Changed
+- Renamed user-facing "Analytics" to "Usage data" across Settings, onboarding, and About (#74)
+- Replaced external GitHub "Learn more" link with in-app analytics info sheet (#74)
+- "Submit" → "Verify" on transaction form; "Skip to Hashes" → "Skip Simulation" (#68)
+- Skip → Close on Ledger emulation screen; setup-screen Skip unchanged (#69)
+- Rewrote onboarding copy to drop misleading "connect your Safe" and "second factor" framing (#68)
+- Simulation results empty-state cards collapsed to compact one-line verified rows (#68)
+- Trimmed About dialog to product summary; scope and legal moved to dedicated single-purpose surfaces (#68)
+- Plain-language rewrites of trust-minimized note, secondary-nodes tooltip, delegate-call warning, and dangerous-transaction copy (#68)
+- "onchain" spelled as one word, "Calldata" cased correctly, screaming-case headers normalized (#68)
+- `ensureNonce` is now best-effort so offline conditions no longer block the verify flow (#61)
+- `package_info_plus` pinned at `8.3.1` to match Aptabase's published range (#73)
+
+### Fixed
+- Typos and broken step numbering in calldata guide sheet ("callldata", duplicated steps, "you signing") (#68)
+- `TapGestureRecognizer` leak in disclaimer sheet from inline creation in `build` (#68)
+- Simulation scope bottom sheet now scrolls so content fits on small screens and large system fonts (#68)
+- Softened simulation copy in Safe API guide (simulation can be skipped or unsupported; not a guarantee) (#68)
+- Corrected `debug_traceCall` description as state access, not execution trace (execution runs locally in REVM) (#68)
+
+### Removed
+- `media_kit`, `media_kit_video`, and `media_kit_libs_video` dependencies; NFT media rendering simplified (#76)
+
 ## [1.1.2+7]
 
 ### Added
@@ -143,6 +182,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Version History Summary
 
+- **v1.1.3** - Opt-in usage analytics, redesigned manual input guides, offline graceful degradation, Ledger zoom, copy review pass
 - **v1.1.2** (2026-03-01) - Popular Safes exploration, privacy notes, nonce UX, and bug fixes
 - **v1.1.1** (2026-02-17) - RPC reliability improvements and version display fix
 - **v1.1.0** (2026-02-15) - ERC-1155 support, on-chain Safe deployment verification, and UX improvements
