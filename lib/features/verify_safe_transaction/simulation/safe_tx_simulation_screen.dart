@@ -442,21 +442,23 @@ class _SafeTxSimulationScreenState extends State<SafeTxSimulationScreen> {
         children: [
           RichText(
             text: TextSpan(
-              style: TextStyle(fontSize: 12, color: Colors.grey[600], fontWeight: FontWeight.bold),
+              style: TextStyle(fontSize: 14, color: Colors.grey[600], fontWeight: FontWeight.bold),
               children: [
                 WidgetSpan(
-                  child: Icon(Icons.warning_amber, size: 13, color: Colors.orange,)
+                  alignment: PlaceholderAlignment.middle,
+                  child: Icon(Icons.warning_amber, size: 16, color: Colors.orange,)
                 ),
                 TextSpan(
                   text: "  You are giving ",
                 ),
                 WidgetSpan(
+                  alignment: PlaceholderAlignment.middle,
                   child: AddressWidget(
                     address: allowance.spender.with0x,
                     chainId: widget.safeAccount.network.chainId,
                     truncateLength: 8,
                     showBlockies: false,
-                    style: TextStyle(fontSize: 12, color: Colors.grey[400], fontWeight: FontWeight.w800),
+                    style: TextStyle(fontSize: 14, color: Colors.grey[400], fontWeight: FontWeight.w800),
                   ),
                 ),
                 TextSpan(
@@ -468,20 +470,10 @@ class _SafeTxSimulationScreenState extends State<SafeTxSimulationScreen> {
                   tokenAddress: allowance.token.with0x,
                   logoUri: metadata.logoUri,
                   label: metadata.symbol,
-                  labelStyle: TextStyle(fontSize: 12, color: Colors.grey[400], fontWeight: FontWeight.w800),
+                  labelStyle: TextStyle(fontSize: 14, color: Colors.grey[400], fontWeight: FontWeight.w800),
                 ),
                 TextSpan(
-                  text: " from your account's ",
-                ),
-                _inlineTokenSpan(
-                  context: context,
-                  tokenAddress: allowance.token.with0x,
-                  logoUri: metadata.logoUri,
-                  label: metadata.name,
-                  labelStyle: TextStyle(fontSize: 12, color: Colors.grey[400], fontWeight: FontWeight.w800),
-                ),
-                TextSpan(
-                  text: " balance",
+                  text: " from your account.",
                 ),
               ]
             ),
@@ -507,35 +499,37 @@ class _SafeTxSimulationScreenState extends State<SafeTxSimulationScreen> {
         children: [
           RichText(
             text: TextSpan(
-              style: TextStyle(fontSize: 12, color: Colors.grey[600], fontWeight: FontWeight.bold),
+              style: TextStyle(fontSize: 14, color: Colors.grey[600], fontWeight: FontWeight.bold),
               children: [
                 WidgetSpan(
-                  child: Icon(Icons.check_circle_rounded, size: 13, color: Colors.green,)
+                  alignment: PlaceholderAlignment.middle,
+                  child: Icon(Icons.check_circle_rounded, size: 16, color: Colors.green,)
                 ),
                 TextSpan(
-                  text: "  You are revoking all previous allowances given to ",
-                ),
-                WidgetSpan(
-                  child: AddressWidget(
-                    address: allowance.spender.with0x,
-                    chainId: widget.safeAccount.network.chainId,
-                    truncateLength: 8,
-                    showBlockies: false,
-                    style: TextStyle(fontSize: 12, color: Colors.grey[400], fontWeight: FontWeight.w800),
-                  ),
-                ),
-                TextSpan(
-                  text: " of your account's ",
+                  text: "  You are revoking all previous ",
                 ),
                 _inlineTokenSpan(
                   context: context,
                   tokenAddress: allowance.token.with0x,
                   logoUri: metadata.logoUri,
                   label: "${metadata.name} (${metadata.symbol})",
-                  labelStyle: TextStyle(fontSize: 12, color: Colors.grey[400], fontWeight: FontWeight.w800),
+                  labelStyle: TextStyle(fontSize: 14, color: Colors.grey[400], fontWeight: FontWeight.w800),
                 ),
                 TextSpan(
-                  text: " balance",
+                  text: " allowances given to ",
+                ),
+                WidgetSpan(
+                  alignment: PlaceholderAlignment.middle,
+                  child: AddressWidget(
+                    address: allowance.spender.with0x,
+                    chainId: widget.safeAccount.network.chainId,
+                    truncateLength: 8,
+                    showBlockies: false,
+                    style: TextStyle(fontSize: 14, color: Colors.grey[400], fontWeight: FontWeight.w800),
+                  ),
+                ),
+                TextSpan(
+                  text: ".",
                 ),
               ]
             ),
