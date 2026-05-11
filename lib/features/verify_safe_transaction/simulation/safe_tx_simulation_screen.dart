@@ -15,6 +15,7 @@ import 'package:safe_opensig/shared/utils/utilities.dart';
 import 'package:safe_opensig/core/storage/network_config_box.dart';
 import 'package:safe_opensig/shared/widgets/simulation_scope_content.dart';
 import 'package:safe_opensig/shared/widgets/trust_minimized_note.dart';
+import 'package:safe_opensig/shared/widgets/address_detail_sheet.dart';
 import 'package:safe_opensig/shared/widgets/address_widget.dart';
 import 'package:safe_opensig/shared/widgets/hold_to_confirm_button.dart';
 import 'package:wallet/wallet.dart';
@@ -262,6 +263,63 @@ class _SafeTxSimulationScreenState extends State<SafeTxSimulationScreen> {
     );
   }
 
+  void _showTokenDetail(BuildContext context, String tokenAddress) {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => AddressDetailSheet(
+        address: tokenAddress,
+        chainId: widget.safeAccount.network.chainId,
+        blockiesSize: 64,
+      ),
+    );
+  }
+
+  Widget _tokenLogo(String logoUri, double size) {
+    return SizedBox(
+      width: size,
+      height: size,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(70),
+        child: logoUri == "unknown"
+            ? Container(
+                alignment: Alignment.center,
+                color: Colors.grey,
+                child: const Text("?", style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
+              )
+            : Image.network(logoUri),
+      ),
+    );
+  }
+
+  WidgetSpan _inlineTokenSpan({
+    required BuildContext context,
+    required String tokenAddress,
+    required String logoUri,
+    required String label,
+    TextStyle? labelStyle,
+  }) {
+    return WidgetSpan(
+      alignment: PlaceholderAlignment.middle,
+      child: GestureDetector(
+        onTap: () => _showTokenDetail(context, tokenAddress),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _tokenLogo(logoUri, 14),
+            const SizedBox(width: 4),
+            Text(
+              label,
+              style: (labelStyle ?? const TextStyle()).copyWith(
+                decoration: TextDecoration.underline,
+                decorationStyle: TextDecorationStyle.dotted,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildTransferItem(TokenTransfer transfer, bool drawSeparatorLine) {
     var isReceived = false;
     if (transfer.recipient.with0x.toLowerCase() == widget.safeAccount.address.toLowerCase()){
@@ -277,23 +335,23 @@ class _SafeTxSimulationScreenState extends State<SafeTxSimulationScreen> {
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              SizedBox(
-                width: 25,
-                height: 25,
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(70),
-                  child: metadata.logoUri == "unknown" ? Container(
-                    alignment: Alignment.center,
-                    color: Colors.grey,
-                    child: Text("?", style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),),
-                  ) : Image.network(metadata.logoUri),
-                ),
-              ),
-              SizedBox(width: 5,),
-              Text(
-                metadata.symbol,
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
+              GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () => _showTokenDetail(context, transfer.token.with0x),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _tokenLogo(metadata.logoUri, 25),
+                    const SizedBox(width: 5),
+                    Text(
+                      metadata.symbol,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        decoration: TextDecoration.underline,
+                        decorationStyle: TextDecorationStyle.dotted,
+                      ),
+                    ),
+                  ],
                 ),
               ),
               Spacer(),
@@ -402,50 +460,25 @@ class _SafeTxSimulationScreenState extends State<SafeTxSimulationScreen> {
                   ),
                 ),
                 TextSpan(
-                  text: " permission to spend ",
-                ),
-                WidgetSpan(
-                  child: SizedBox(
-                    width: 14,
-                    height: 14,
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(70),
-                      child: metadata.logoUri == "unknown" ? Container(
-                        alignment: Alignment.center,
-                        color: Colors.grey,
-                        child: Text("?", style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),),
-                      ) : Image.network(metadata.logoUri),
-                    ),
-                  ),
-                ),
-                TextSpan(
-                  text: " $readableAmount",
-                  style: TextStyle(color: Colors.grey[400], fontWeight: FontWeight.w800, fontSize: 14),
-                ),
-                TextSpan(
-                  text: " ${metadata.symbol}",
+                  text: " permission to spend $readableAmount ",
                   style: TextStyle(color: Colors.grey[400], fontWeight: FontWeight.w800),
+                ),
+                _inlineTokenSpan(
+                  context: context,
+                  tokenAddress: allowance.token.with0x,
+                  logoUri: metadata.logoUri,
+                  label: metadata.symbol,
+                  labelStyle: TextStyle(fontSize: 12, color: Colors.grey[400], fontWeight: FontWeight.w800),
                 ),
                 TextSpan(
                   text: " from your account's ",
                 ),
-                WidgetSpan(
-                  child: SizedBox(
-                    width: 14,
-                    height: 14,
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(70),
-                      child: metadata.logoUri == "unknown" ? Container(
-                        alignment: Alignment.center,
-                        color: Colors.grey,
-                        child: Text("?", style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),),
-                      ) : Image.network(metadata.logoUri),
-                    ),
-                  ),
-                ),
-                TextSpan(
-                  text: " ${metadata.name}",
-                  style: TextStyle(color: Colors.grey[400], fontWeight: FontWeight.w800),
+                _inlineTokenSpan(
+                  context: context,
+                  tokenAddress: allowance.token.with0x,
+                  logoUri: metadata.logoUri,
+                  label: metadata.name,
+                  labelStyle: TextStyle(fontSize: 12, color: Colors.grey[400], fontWeight: FontWeight.w800),
                 ),
                 TextSpan(
                   text: " balance",
@@ -494,23 +527,12 @@ class _SafeTxSimulationScreenState extends State<SafeTxSimulationScreen> {
                 TextSpan(
                   text: " of your account's ",
                 ),
-                WidgetSpan(
-                  child: SizedBox(
-                    width: 14,
-                    height: 14,
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(70),
-                      child: metadata.logoUri == "unknown" ? Container(
-                        alignment: Alignment.center,
-                        color: Colors.grey,
-                        child: Text("?", style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),),
-                      ) : Image.network(metadata.logoUri),
-                    ),
-                  ),
-                ),
-                TextSpan(
-                  text: " ${metadata.name} (${metadata.symbol})",
-                  style: TextStyle(color: Colors.grey[400], fontWeight: FontWeight.w800),
+                _inlineTokenSpan(
+                  context: context,
+                  tokenAddress: allowance.token.with0x,
+                  logoUri: metadata.logoUri,
+                  label: "${metadata.name} (${metadata.symbol})",
+                  labelStyle: TextStyle(fontSize: 12, color: Colors.grey[400], fontWeight: FontWeight.w800),
                 ),
                 TextSpan(
                   text: " balance",
@@ -592,28 +614,41 @@ class _SafeTxSimulationScreenState extends State<SafeTxSimulationScreen> {
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              _buildNFTImage(metadata.imageURI, size: 40),
-              SizedBox(width: 8),
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '${metadata.collectionName} (${metadata.symbol})',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () => _showTokenDetail(context, nftTransfer.collection.with0x),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      _buildNFTImage(metadata.imageURI, size: 40),
+                      SizedBox(width: 8),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '${metadata.collectionName} (${metadata.symbol})',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                decoration: TextDecoration.underline,
+                                decorationStyle: TextDecorationStyle.dotted,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            Text(
+                              'ID: ${Utilities.truncate(nftTransfer.tokenId.toString(), leadingDigits: 8, trailingDigits: 4)}',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: Colors.grey[600],
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
                       ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    Text(
-                      'ID: ${Utilities.truncate(nftTransfer.tokenId.toString(), leadingDigits: 8, trailingDigits: 4)}',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: Colors.grey[600],
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
               Icon(
