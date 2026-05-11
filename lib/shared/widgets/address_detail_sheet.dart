@@ -48,7 +48,16 @@ class AddressDetailSheet extends StatelessWidget {
     Navigator.of(context).pop();
     try {
       final uri = Uri.parse(url);
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
+      final launched =
+          await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (!launched) {
+        messenger.showSnackBar(
+          const SnackBar(
+            content: Text('Failed to open block explorer'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
     } catch (e) {
       messenger.showSnackBar(
         const SnackBar(
