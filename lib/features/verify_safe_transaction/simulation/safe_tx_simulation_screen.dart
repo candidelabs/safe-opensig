@@ -320,6 +320,27 @@ class _SafeTxSimulationScreenState extends State<SafeTxSimulationScreen> {
     );
   }
 
+  WidgetSpan _inlineTappableLabelSpan({
+    required BuildContext context,
+    required String tokenAddress,
+    required String label,
+    TextStyle? labelStyle,
+  }) {
+    return WidgetSpan(
+      alignment: PlaceholderAlignment.middle,
+      child: GestureDetector(
+        onTap: () => _showTokenDetail(context, tokenAddress),
+        child: Text(
+          label,
+          style: (labelStyle ?? const TextStyle()).copyWith(
+            decoration: TextDecoration.underline,
+            decorationStyle: TextDecorationStyle.dotted,
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildTransferItem(TokenTransfer transfer, bool drawSeparatorLine) {
     var isReceived = false;
     if (transfer.recipient.with0x.toLowerCase() == widget.safeAccount.address.toLowerCase()){
@@ -608,41 +629,38 @@ class _SafeTxSimulationScreenState extends State<SafeTxSimulationScreen> {
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
+              GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () => _showTokenDetail(context, nftTransfer.collection.with0x),
+                child: _buildNFTImage(metadata.imageURI, size: 40),
+              ),
+              SizedBox(width: 8),
               Expanded(
-                child: GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTap: () => _showTokenDetail(context, nftTransfer.collection.with0x),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      _buildNFTImage(metadata.imageURI, size: 40),
-                      SizedBox(width: 8),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              '${metadata.collectionName} (${metadata.symbol})',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                decoration: TextDecoration.underline,
-                                decorationStyle: TextDecorationStyle.dotted,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            Text(
-                              'ID: ${Utilities.truncate(nftTransfer.tokenId.toString(), leadingDigits: 8, trailingDigits: 4)}',
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: Colors.grey[600],
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: () => _showTokenDetail(context, nftTransfer.collection.with0x),
+                      child: Text(
+                        '${metadata.collectionName} (${metadata.symbol})',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          decoration: TextDecoration.underline,
+                          decorationStyle: TextDecorationStyle.dotted,
                         ),
+                        overflow: TextOverflow.ellipsis,
                       ),
-                    ],
-                  ),
+                    ),
+                    Text(
+                      'ID: ${Utilities.truncate(nftTransfer.tokenId.toString(), leadingDigits: 8, trailingDigits: 4)}',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Colors.grey[600],
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
                 ),
               ),
               Icon(
@@ -794,9 +812,11 @@ class _SafeTxSimulationScreenState extends State<SafeTxSimulationScreen> {
                         TextSpan(
                           text: " permission to transfer ALL tokens in ",
                         ),
-                        TextSpan(
-                          text: "${metadata.collectionName} (${metadata.symbol})",
-                          style: TextStyle(color: Colors.grey[400], fontWeight: FontWeight.w800),
+                        _inlineTappableLabelSpan(
+                          context: context,
+                          tokenAddress: nftAllowance.collection.with0x,
+                          label: "${metadata.collectionName} (${metadata.symbol})",
+                          labelStyle: TextStyle(fontSize: 12, color: Colors.grey[400], fontWeight: FontWeight.w800),
                         ),
                         TextSpan(
                           text: " from your account",
@@ -805,9 +825,11 @@ class _SafeTxSimulationScreenState extends State<SafeTxSimulationScreen> {
                         TextSpan(
                           text: " permission to transfer NFT ",
                         ),
-                        TextSpan(
-                          text: "${metadata.collectionName} (${metadata.symbol})",
-                          style: TextStyle(color: Colors.grey[400], fontWeight: FontWeight.w800),
+                        _inlineTappableLabelSpan(
+                          context: context,
+                          tokenAddress: nftAllowance.collection.with0x,
+                          label: "${metadata.collectionName} (${metadata.symbol})",
+                          labelStyle: TextStyle(fontSize: 12, color: Colors.grey[400], fontWeight: FontWeight.w800),
                         ),
                         TextSpan(
                           text: " with Token ID ",
@@ -862,17 +884,21 @@ class _SafeTxSimulationScreenState extends State<SafeTxSimulationScreen> {
                         TextSpan(
                           text: "  You are revoking operator approval for ALL tokens in ",
                         ),
-                        TextSpan(
-                          text: "${metadata.collectionName} (${metadata.symbol})",
-                          style: TextStyle(color: Colors.grey[400], fontWeight: FontWeight.w800),
+                        _inlineTappableLabelSpan(
+                          context: context,
+                          tokenAddress: nftAllowance.collection.with0x,
+                          label: "${metadata.collectionName} (${metadata.symbol})",
+                          labelStyle: TextStyle(fontSize: 12, color: Colors.grey[400], fontWeight: FontWeight.w800),
                         ),
                       ] else ...[
                         TextSpan(
                           text: "  You are revoking the approval for NFT ",
                         ),
-                        TextSpan(
-                          text: "${metadata.collectionName} (${metadata.symbol})",
-                          style: TextStyle(color: Colors.grey[400], fontWeight: FontWeight.w800),
+                        _inlineTappableLabelSpan(
+                          context: context,
+                          tokenAddress: nftAllowance.collection.with0x,
+                          label: "${metadata.collectionName} (${metadata.symbol})",
+                          labelStyle: TextStyle(fontSize: 12, color: Colors.grey[400], fontWeight: FontWeight.w800),
                         ),
                         TextSpan(
                           text: " with Token ID ",
