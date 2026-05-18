@@ -275,18 +275,22 @@ class _SafeTxSimulationScreenState extends State<SafeTxSimulationScreen> {
   }
 
   Widget _tokenLogo(String logoUri, double size) {
+    final fallback = Container(
+      alignment: Alignment.center,
+      color: Colors.grey,
+      child: Text("?", style: TextStyle(fontSize: size * 0.6, fontWeight: FontWeight.bold)),
+    );
     return SizedBox(
       width: size,
       height: size,
       child: ClipRRect(
         borderRadius: BorderRadius.circular(70),
         child: logoUri == "unknown"
-            ? Container(
-                alignment: Alignment.center,
-                color: Colors.grey,
-                child: const Text("?", style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
-              )
-            : Image.network(logoUri),
+            ? fallback
+            : Image.network(
+                logoUri,
+                errorBuilder: (context, error, stackTrace) => fallback,
+              ),
       ),
     );
   }
