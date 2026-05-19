@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+## [1.1.4]
+
+### Added
+- Tap a token name in simulation results to open its contract address sheet (#84)
+
+### Fixed
+- Block explorer link from the address detail sheet: dismiss the sheet before launching, surface a SnackBar on failure, and rely on `launchUrl`'s return value instead of `canLaunchUrl` (#83)
+- Added an `https` `VIEW` intent to Android `<queries>` so external block explorer URLs resolve on Android 11+ (#83)
+- Token logo fallback ("?") now scales with the requested logo size and renders on `Image.network` load errors instead of leaving a broken row (#86)
+
 ## [1.1.3]
 
 ### Added
@@ -182,6 +192,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Version History Summary
 
+- **v1.1.4** - Tappable token names in simulation, block explorer launch fix, token logo fallback scaling
 - **v1.1.3** - Opt-in usage analytics, redesigned manual input guides, offline graceful degradation, Ledger zoom, copy review pass
 - **v1.1.2** (2026-03-01) - Popular Safes exploration, privacy notes, nonce UX, and bug fixes
 - **v1.1.1** (2026-02-17) - RPC reliability improvements and version display fix
