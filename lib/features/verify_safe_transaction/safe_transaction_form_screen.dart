@@ -12,6 +12,7 @@ import 'package:safe_opensig/features/verify_safe_transaction/widgets/safe_tx_ca
 import 'package:safe_opensig/features/verify_safe_transaction/widgets/safe_tx_calldata_input.dart';
 import 'package:safe_opensig/features/verify_safe_transaction/widgets/safe_tx_json_guide_sheet.dart';
 import 'package:safe_opensig/features/verify_safe_transaction/widgets/safe_tx_json_input.dart';
+import 'package:safe_opensig/shared/widgets/ur_qr_scanner_sheet.dart';
 import 'package:safe_opensig/core/storage/network_config_box.dart';
 import 'package:safe_opensig/shared/constants/analytics_events.dart';
 import 'package:safe_opensig/shared/models/safe_account_model.dart';
@@ -334,6 +335,29 @@ class _SafeTransactionFormScreenState extends State<SafeTransactionFormScreen> {
     );
   }
 
+  /// Open the continuous ERC-4527 / BC-UR fountain-code QR scanner.
+  /// Reconstructs the signing payload from animated QR frames and feeds
+  /// it straight into the verification pipeline as a SafeTransaction.
+  void _openUrScanner() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      showDragHandle: true,
+      isDismissible: true,
+      shape: RoundedRectangleBorder(
+        borderRadius: ThemeConfig.borderRadiusLarge,
+      ),
+      builder: (_) => UrQrScannerSheet(
+        legacyJson: isLegacyJson,
+        onComplete: (safeTx) {
+          setState(() => safeTransaction = safeTx);
+          _onSubmit();
+        },
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -460,6 +484,21 @@ class _SafeTransactionFormScreenState extends State<SafeTransactionFormScreen> {
             onValidInput: (safeTx) {
               setState(() => safeTransaction = safeTx);
             },
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: _openUrScanner,
+              icon: const Icon(Icons.qr_code_scanner_rounded, size: 18),
+              label: const Text('Scan ERC-4527 QR'),
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                shape: RoundedRectangleBorder(
+                  borderRadius: ThemeConfig.borderRadiusSmall,
+                ),
+              ),
+            ),
           ),
           const SizedBox(height: 12),
           SizedBox(

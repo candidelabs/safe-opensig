@@ -34,6 +34,11 @@ dependencies:
   http: 1.6.0
   dio: 5.9.0
   mobile_scanner: 7.1.4
+  # ERC-4527 / BC-UR fountain-code reconstruction for animated QR signing payloads
+  bc_ur:
+    git:
+      url: https://github.com/ImL1s/bc-ur-dart.git
+      ref: a7b0db50f557295a1318c8ecf52ab5c6e6e81a6f
   uuid: 4.5.2
   equatable: 2.0.8
   permission_handler: 12.0.1
