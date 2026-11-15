@@ -102,6 +102,15 @@ class TraceDecoder {
     return true;
   }
 
+  // Safe owner/module/guard events carry a single address parameter that is
+  // non-indexed in Safe <=1.3.0 (the address lives in `data`) and indexed in
+  // Safe >=1.4.0 (the address lives in topics[1]). The event signature hash is
+  // identical for both, so read from whichever location is actually present.
+  EthereumAddress _decodeEventAddress(List<String> topics, Map<String, dynamic> log){
+    var encoded = topics.length > 1 ? topics[1] : log["data"].toString();
+    return decodeAbi(["address"], hexToBytes(encoded))[0] as EthereumAddress;
+  }
+
   dynamic processLog(String account, Network network, Map<String, dynamic> log){
     account = account.toLowerCase();
     var topics = (log["topics"] as List<dynamic>).cast<String>();
@@ -209,13 +218,13 @@ class TraceDecoder {
           network: network,
         );
       }else if (eventName == "safe-owner-addition"){
-        var addedOwner = decodeAbi(["address"], hexToBytes(topics[1]))[0] as EthereumAddress;
+        var addedOwner = _decodeEventAddress(topics, log);
         return SafeSettingChange(
           type: SafeSettingChangeType.OWNER_ADDITION,
           data: [addedOwner]
         );
       }else if (eventName == "safe-owner-revocation"){
-        var revokedOwner = decodeAbi(["address"], hexToBytes(topics[1]))[0] as EthereumAddress;
+        var revokedOwner = _decodeEventAddress(topics, log);
         return SafeSettingChange(
           type: SafeSettingChangeType.OWNER_REVOCATION,
           data: [revokedOwner]
@@ -227,25 +236,25 @@ class TraceDecoder {
           data: [newThreshold]
         );
       }else if (eventName == "safe-module-enable"){
-        var newModule = decodeAbi(["address"], hexToBytes(topics[1]))[0] as EthereumAddress;
+        var newModule = _decodeEventAddress(topics, log);
         return WarningTransaction(
           type: WarningTransactionType.MODULE_ADDITION,
           data: [newModule]
         );
       }else if (eventName == "safe-module-disable"){
-        var disabledModule = decodeAbi(["address"], hexToBytes(topics[1]))[0] as EthereumAddress;
+        var disabledModule = _decodeEventAddress(topics, log);
         return WarningTransaction(
           type: WarningTransactionType.MODULE_REVOCATION,
           data: [disabledModule]
         );
       }else if (eventName == "safe-module-guard-change"){
-        var newModuleGuard = decodeAbi(["address"], hexToBytes(topics[1]))[0] as EthereumAddress;
+        var newModuleGuard = _decodeEventAddress(topics, log);
         return WarningTransaction(
           type: WarningTransactionType.MODULE_GUARD_CHANGE,
           data: [newModuleGuard]
         );
       }else if (eventName == "safe-guard-change"){
-        var newGuard = decodeAbi(["address"], hexToBytes(topics[1]))[0] as EthereumAddress;
+        var newGuard = _decodeEventAddress(topics, log);
         return WarningTransaction(
           type: WarningTransactionType.GUARD_CHANGE,
           data: [newGuard]
