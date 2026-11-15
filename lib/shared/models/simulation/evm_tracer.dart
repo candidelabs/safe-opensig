@@ -5,6 +5,17 @@ import 'package:safe_opensig/shared/utils/extensions/bigint_extensions.dart';
 import 'package:safe_opensig/shared/utils/utilities.dart';
 import 'package:web3dart/web3dart.dart';
 
+/// Upper bound on the gas given to a simulated transaction.
+const int maxSimulationGas = 100000000;
+
+/// Gas limit for the simulated transaction: the block's gas limit, capped at [maxSimulationGas].
+/// Arbitrum reports a block gas limit of 2^50; at the simulated gas price, prepaying that much gas
+/// costs more than the simulated sender's balance, and the simulation fails before it starts.
+BigInt simulationGasLimit(BigInt blockGasLimit) {
+  final cap = BigInt.from(maxSimulationGas);
+  return blockGasLimit < cap ? blockGasLimit : cap;
+}
+
 class EVMTracer {
   static bool rustLibInitiated = false;
   late Web3Client provider;
@@ -66,7 +77,7 @@ class EVMTracer {
     }
     var block = prestate.$1;
     var baseFeePerGas = Utilities.decodeBigInt(block["baseFeePerGas"])!.scale(1.25);
-    var blockGasLimit = Utilities.decodeBigInt(block["gasLimit"])!;
+    var gasLimit = simulationGasLimit(Utilities.decodeBigInt(block["gasLimit"])!);
     var blockRaw = jsonEncode(prestate.$1);
     var traceRaw = jsonEncode(prestate.$2);
     var chainId = await provider.getChainId();
@@ -76,7 +87,7 @@ class EVMTracer {
       fromNonce: BigInt.from(0),
       to: to,
       data: data,
-      gasLimit: blockGasLimit,
+      gasLimit: gasLimit,
       gasPrice: baseFeePerGas,
       gasPriorityFee: baseFeePerGas,
       latestBlockEnv: blockRaw,
