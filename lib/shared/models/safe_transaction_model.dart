@@ -264,8 +264,8 @@ class SafeTransaction {
         callData,
         stateOverrides
       );
-      // Add missing excessBlobGas to block data for select networks for REVM compatibility.
-      if ({42161}.contains(account.network.chainId)) {
+      // REVM needs excessBlobGas. Arbitrum's value isn't usable, and chains without blobs (like Polygon) don't report it.
+      if ({42161}.contains(account.network.chainId) || block["excessBlobGas"] == null) {
         block["excessBlobGas"] = "0x0";
       }
       // Verifying state
